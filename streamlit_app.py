@@ -76,8 +76,8 @@ if not df.empty:
         st.success(f"Updated patient record for {new_name}. Please refresh to see changes.")
 
     if st.button("Delete Patient"):
-    worksheet.delete_rows(int(selected_row + 2))
-    st.success(f"Deleted patient record for {selected_name}. Please refresh to see changes.")
+        worksheet.delete_rows(int(selected_row + 2))
+        st.success(f"Deleted patient record for {selected_name}. Please refresh to see changes.")
 
 else:
     st.info("No patients to edit or delete.")
