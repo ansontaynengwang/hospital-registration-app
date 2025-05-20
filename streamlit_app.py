@@ -81,10 +81,10 @@ elif st.session_state.page == 2:
             ])
             st.success(f"Patient {patient['name']} registered successfully at {malaysia_time}.")
 
-        # Reset session state
-        st.session_state.page = 1
-        st.session_state.patient_data = {}
-        st.experimental_rerun()
+# Offer a button to register another patient
+if st.button("Register Another Patient"):
+    st.session_state.page = 1
+    st.session_state.patient_data = {}
 
 # Display existing patients
 st.markdown("### Existing Patients")
