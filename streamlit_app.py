@@ -144,6 +144,7 @@ if not df.empty:
             try:
                 worksheet.delete_rows(int(selected_row_index) + 2)
                 st.success(f"Deleted patient record for {selected_name}.")
+                time.sleep(2)
                 st.rerun()
             except Exception as e:
                 st.error(f"Error deleting row: {e}")
@@ -155,7 +156,6 @@ else:
 if st.button("Register Another Patient"):
     st.session_state.page = 1
     st.session_state.patient_data = {}
-    time.sleep(2)
     st.rerun()
 
 # Display data
