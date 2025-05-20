@@ -24,6 +24,7 @@ worksheet = sheet.worksheet("Patient")
 # Read existing data and remove fully empty rows
 data = worksheet.get_all_records()
 df = pd.DataFrame(data)
+df = df[df["Patient Full Name"].str.strip().astype(bool)]
 df = df[df.apply(lambda row: any(pd.notna(row) & (row != "")), axis=1)]  # Remove empty rows
 
 # Initialize session state
