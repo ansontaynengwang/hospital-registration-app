@@ -43,20 +43,15 @@ if st.session_state.page == 1:
 
     if st.button("Next"):
         if not name or not ic_number or gender == "Select":
-            st.error("Please fill in all required fields.")
+        st.error("Please fill in all required fields.")
         else:
-            st.session_state.patient_data = {
+        st.session_state.patient_data = {
             "name": name,
             "ic_number": ic_number,
             "age": age,
             "gender": gender
             }
-            st.session_state.next_clicked = True
-
-# Move to page 2 if flag is set
-    if st.session_state.get("next_clicked"):
-        st.session_state.page = 2
-        st.session_state.next_clicked = False
+            st.session_state.page = 2 
 
 
 # Step 2: Admission Info
