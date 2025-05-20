@@ -30,7 +30,7 @@ st.dataframe(df)
 # Form to add a new patient
 st.markdown("### Add New Patient")
 with st.form("patient_form"):
-    name = st.text_input("Patient Name*")
+    name = st.text_input("Patient Full Name*")
     age = st.number_input("Age*", min_value=1, max_value=100)
     wad_num = st.number_input("Wad Number*", min_value=1, max_value=120)
     bed_num = st.number_input("Bed Number*", min_value=1, max_value=120)
