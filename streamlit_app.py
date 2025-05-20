@@ -6,7 +6,8 @@ import pytz
 import pandas as pd
 
 # Get current Malaysia time
-malaysia_time = datetime.now(pytz.timezone("Asia/Kuala_Lumpur")).strftime("%Y-%m-%d %H:%M:%S")
+def get_malaysia_time():
+    return datetime.now(pytz.timezone("Asia/Kuala_Lumpur")).strftime("%Y-%m-%d %H:%M:%S")
 
 # Display hospital image
 st.image("https://review.ibanding.com/company/1532441453.jpg", caption="Pekan Hospital", use_container_width=True)
@@ -21,11 +22,17 @@ client = gspread.authorize(creds)
 sheet = client.open("Patient")
 worksheet = sheet.worksheet("Patient")
 
-# Read existing data and remove fully empty rows
-data = worksheet.get_all_records()
-df = pd.DataFrame(data)
-df = df[df["Patient Full Name"].str.strip().astype(bool)]
-df = df[df.apply(lambda row: any(pd.notna(row) & (row != "")), axis=1)]  # Remove empty rows
+# Read existing data and clean it (remove fully empty or corrupted rows)
+data = worksheet.get_all_values()
+headers = data[0]
+rows = data[1:]
+
+# Remove rows that are entirely empty
+clean_rows = [row for row in rows if any(cell.strip() for cell in row)]
+
+# Convert to DataFrame
+df = pd.DataFrame(clean_rows, columns=headers)
+df = df[df["Patient Full Name"].str.strip().astype(bool)]  # Drop rows with empty patient name
 
 # Initialize session state
 if "page" not in st.session_state:
@@ -35,10 +42,9 @@ if "patient_data" not in st.session_state:
 
 st.title("Pekan Hospital Patient Registration")
 
-# Step 1: Basic Patient Info
+# Step 1: Basic Info
 if st.session_state.page == 1:
     st.header("Step 1: Basic Patient Information")
-
     with st.form("basic_info_form"):
         name = st.text_input("Patient Full Name*", key="name")
         ic_number = st.text_input("IC Number*", key="ic_number")
@@ -73,7 +79,7 @@ elif st.session_state.page == 2:
 
     if st.button("Submit"):
         patient = st.session_state.patient_data
-        malaysia_time = datetime.now(pytz.timezone("Asia/Kuala_Lumpur")).strftime("%Y-%m-%d %H:%M:%S")
+        time_now = get_malaysia_time()
 
         worksheet.append_row([
             patient["name"],
@@ -84,61 +90,63 @@ elif st.session_state.page == 2:
             bed_num,
             floor,
             status,
-            malaysia_time
+            time_now
         ])
-
-        st.success(f"Patient {patient['name']} registered successfully at {malaysia_time}.")
+        st.success(f"Patient {patient['name']} registered successfully at {time_now}.")
         st.info("Please refresh the page to see the updated patient list.")
 
 # Edit/Delete Section
 st.markdown("### Edit or Delete Patient")
 
 if not df.empty:
-    df.columns = df.columns.str.strip()  # Clean column names
+    df.columns = df.columns.str.strip()
     patient_names = df["Patient Full Name"].dropna().tolist()
-
     selected_name = st.selectbox("Select a patient to edit or delete", patient_names)
 
     if selected_name:
-        selected_row = df[df["Patient Full Name"] == selected_name].index[0]
-        selected_data = df.loc[selected_row]
+        selected_row_index = df[df["Patient Full Name"] == selected_name].index[0]
+        selected_data = df.loc[selected_row_index]
 
         with st.form("edit_form"):
             new_name = st.text_input("Edit Name", value=selected_data["Patient Full Name"])
             new_ic = st.text_input("Edit IC Number", value=selected_data["IC Number"])
             new_age = st.number_input("Edit Age", min_value=1, max_value=100, value=int(selected_data["Age"]))
-            new_gender = st.selectbox("Edit Gender", ["Male", "Female"], index=["Male", "Female"].index(selected_data["Gender"]))
+            new_gender = st.selectbox("Edit Gender", ["Male", "Female"],
+                                      index=["Male", "Female"].index(selected_data["Gender"]))
             new_status = st.selectbox("Edit Patient Status", ["Stable", "Critical", "Under Observation", "Discharged"],
                                       index=["Stable", "Critical", "Under Observation", "Discharged"].index(selected_data["Patient Status"]))
             edit_submit = st.form_submit_button("Update Patient")
 
         if edit_submit:
-            malaysia_time = datetime.now(pytz.timezone("Asia/Kuala_Lumpur")).strftime("%Y-%m-%d %H:%M:%S")
+            time_now = get_malaysia_time()
+            update_row = selected_row_index + 2  # offset for header
 
-            worksheet.update(f"A{selected_row + 2}", [[new_name]])
-            worksheet.update(f"B{selected_row + 2}", [[new_ic]])
-            worksheet.update(f"C{selected_row + 2}", [[new_age]])
-            worksheet.update(f"D{selected_row + 2}", [[new_gender]])
-            worksheet.update(f"H{selected_row + 2}", [[new_status]])
-            worksheet.update(f"I{selected_row + 2}", [[malaysia_time]])
+            worksheet.update(f"A{update_row}", [[new_name]])
+            worksheet.update(f"B{update_row}", [[new_ic]])
+            worksheet.update(f"C{update_row}", [[new_age]])
+            worksheet.update(f"D{update_row}", [[new_gender]])
+            worksheet.update(f"H{update_row}", [[new_status]])
+            worksheet.update(f"I{update_row}", [[time_now]])
 
             st.success(f"Updated patient record for {new_name}.")
             st.rerun()
 
         if st.button("Delete Patient"):
-            worksheet.delete_rows(selected_row + 2)
-            st.success(f"Deleted patient record for {selected_name}.")
-            st.rerun()
-
+            try:
+                worksheet.delete_rows(selected_row_index + 2)
+                st.success(f"Deleted patient record for {selected_name}.")
+                st.rerun()
+            except Exception as e:
+                st.error(f"Error deleting row: {e}")
 else:
     st.info("No patients available to edit or delete.")
 
-# Restart registration
+# Register another patient
 if st.button("Register Another Patient"):
     st.session_state.page = 1
     st.session_state.patient_data = {}
     st.rerun()
 
-# Display patient table
+# Display data
 st.markdown("### Existing Patients")
 st.dataframe(df)
