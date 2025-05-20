@@ -52,6 +52,7 @@ if st.session_state.page == 1:
                 "gender": gender
             }
             st.session_state.page = 2
+            st.experimental_rerun()
 
 
 # Step 2: Admission Info
