@@ -31,9 +31,9 @@ clean_rows = [row for row in rows if any(cell.strip() for cell in row)]
 df = pd.DataFrame(clean_rows, columns=headers)
 df = df[df["Patient Full Name"].str.strip().astype(bool)]
 
-# Normalize ICs for duplicate checks
+# Normalize columns
 df["IC Number"] = df["IC Number"].astype(str).str.strip()
-df["Patient Full Name"] = df["Patient Full Name"].astype(str).str.strip()
+df["Patient Full Name"] = df["Patient Full Name"].astype(str).str.strip().str.upper()
 
 # Initialize session state
 if "page" not in st.session_state:
@@ -47,30 +47,30 @@ st.title("Pekan Hospital Patient Registration")
 if st.session_state.page == 1:
     st.header("Step 1: Basic Patient Information")
     with st.form("basic_info_form"):
-        name = st.text_input("Patient Full Name*", key="name")
-        ic_number = st.text_input("IC Number*", key="ic_number")
+        name_input = st.text_input("Patient Full Name*", key="name")
+        ic_number_input = st.text_input("IC Number*", key="ic_number")
         age = st.number_input("Age*", min_value=1, max_value=100, key="age")
         gender = st.selectbox("Gender*", ["Select", "Male", "Female"], key="gender")
         next_clicked = st.form_submit_button("Next")
 
     if next_clicked:
-        if not name or not ic_number or gender == "Select":
+        if not name_input or not ic_number_input or gender == "Select":
             st.error("Please fill in all required fields.")
         else:
-            formatted_name = name.upper().strip()
-            formatted_ic = ic_number.strip()
+            name = name_input.strip().upper()
+            ic_number = ic_number_input.strip()
 
-            existing_names = df["Patient Full Name"].str.upper().tolist() if not df.empty else []
-            existing_ics = df["IC Number"].astype(str).str.strip().tolist()
+            existing_ics = df["IC Number"].tolist()
+            existing_names = df["Patient Full Name"].tolist()
 
-            if formatted_ic in existing_ics:
-                st.warning(f"The IC number '{formatted_ic}' is already registered.")
-            elif formatted_name in existing_names:
-                st.warning(f"The patient name '{formatted_name}' is already registered.")
+            if ic_number in existing_ics:
+                st.warning(f"The IC number '{ic_number}' is already registered.")
+            elif name in existing_names:
+                st.warning(f"The patient name '{name}' is already registered.")
             else:
                 st.session_state.patient_data = {
-                    "name": formatted_name,
-                    "ic_number": formatted_ic,
+                    "name": name,
+                    "ic_number": ic_number,
                     "age": age,
                     "gender": gender
                 }
@@ -90,13 +90,13 @@ elif st.session_state.page == 2:
         time_now = get_malaysia_time()
 
         new_row = [
-            patient["name"],                  # Already uppercased
-            str(patient["ic_number"]),        # Ensure string
+            patient["name"],
+            str(patient["ic_number"]),
             str(patient["age"]),
             patient["gender"],
             str(wad_num),
             str(bed_num),
-            str(floor),
+            floor,
             status,
             time_now
         ]
@@ -122,7 +122,6 @@ elif st.session_state.page == 2:
 st.markdown("### Edit or Delete Patient")
 
 if not df.empty:
-    df.columns = df.columns.str.strip()
     patient_names = df["Patient Full Name"].dropna().tolist()
     selected_name = st.selectbox("Select a patient to edit or delete", patient_names)
 
@@ -131,7 +130,8 @@ if not df.empty:
         selected_data = df.loc[selected_row_index]
 
         with st.form("edit_form"):
-            new_name = st.text_input("Edit Name", value=selected_data["Patient Full Name"]).upper()
+            new_name_input = st.text_input("Edit Name", value=selected_data["Patient Full Name"])
+            new_name = new_name_input.strip().upper()
             new_ic = st.text_input("Edit IC Number", value=selected_data["IC Number"]).strip()
             new_age = st.number_input("Edit Age", min_value=1, max_value=100, value=int(selected_data["Age"]))
             new_gender = st.selectbox("Edit Gender", ["Male", "Female"],
@@ -145,7 +145,7 @@ if not df.empty:
             update_row = selected_row_index + 2
 
             worksheet.update(f"A{update_row}", [[new_name]])
-            worksheet.update(f"B{update_row}", [[str(new_ic)]])
+            worksheet.update(f"B{update_row}", [[new_ic]])
             worksheet.update(f"C{update_row}", [[str(new_age)]])
             worksheet.update(f"D{update_row}", [[new_gender]])
             worksheet.update(f"H{update_row}", [[new_status]])
@@ -157,7 +157,7 @@ if not df.empty:
 
         if st.button("Delete Patient"):
             try:
-                worksheet.delete_rows(int(selected_row_index) + 2)
+                worksheet.delete_rows(update_row)
                 st.success(f"Deleted patient record for {selected_name}.")
                 time.sleep(2)
                 st.rerun()
