@@ -89,3 +89,5 @@ if st.button("Register Another Patient"):
 # Display existing patients
 st.markdown("### Existing Patients")
 st.dataframe(df)
+st.info("Please refresh the page to see the updated patient list.")
+
