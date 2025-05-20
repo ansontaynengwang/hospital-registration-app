@@ -106,21 +106,21 @@ if not df.empty:
             edit_submit = st.form_submit_button("Update Patient")
 
         if edit_submit:
-            malaysia_time = datetime.now(pytz.timezone("Asia/Kuala_Lumpur")).strftime("%Y-%m-%d %H:%M:%S")
+            malaysia_time = datetime.now(pytz.timezone("Asia/Kuala_Lumpur")).strftime("%Y-%m-%d %H:%M:%S")
 
-            worksheet.update(f"A{selected_row + 2}", [[new_name]])
-            worksheet.update(f"B{selected_row + 2}", [[new_ic]])
-            worksheet.update(f"C{selected_row + 2}", [[new_age]])
-            worksheet.update(f"D{selected_row + 2}", [[new_gender]])
-            worksheet.update(f"H{selected_row + 2}", [[new_status]])
-            worksheet.update(f"I{selected_row + 2}", [[malaysia_time]])
+            worksheet.update(f"A{selected_row + 2}", [[new_name]])
+            worksheet.update(f"B{selected_row + 2}", [[new_ic]])
+            worksheet.update(f"C{selected_row + 2}", [[new_age]])
+            worksheet.update(f"D{selected_row + 2}", [[new_gender]])
+            worksheet.update(f"H{selected_row + 2}", [[new_status]])
+            worksheet.update(f"I{selected_row + 2}", [[malaysia_time]])
 
-            st.success(f"Updated patient record for {new_name}.")
+            st.success(f"Updated patient record for {new_name}.")
 
         if st.button("Delete Patient"):
-            # Clear patient data but keep the row
             worksheet.update(f"A{selected_row + 2}:I{selected_row + 2}", [[""] * 9])
             st.success(f"Deleted patient record for {selected_name}.")
+
 else:
     st.info("No patients available to edit or delete.")
 
