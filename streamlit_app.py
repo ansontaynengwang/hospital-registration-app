@@ -82,6 +82,43 @@ elif st.session_state.page == 2:
             st.success(f"Patient {patient['name']} registered successfully at {malaysia_time}.")
             st.info("Please refresh the page to see the updated patient list.")
 
+st.markdown("### Edit or Delete Patient")
+
+if not df.empty:
+    df.columns = df.columns.str.strip()  # Clean column names
+    patient_names = df["Patient Full Name"].dropna().tolist()
+
+    selected_name = st.selectbox("Select a patient to edit or delete", patient_names)
+
+    if selected_name:
+        selected_row = df[df["Patient Full Name"] == selected_name].index[0]
+        selected_data = df.loc[selected_row]
+
+        with st.form("edit_form"):
+            new_name = st.text_input("Edit Name", value=selected_data["Patient Full Name"])
+            new_ic = st.text_input("Edit IC Number", value=selected_data["IC Number"])
+            new_age = st.number_input("Edit Age", min_value=1, max_value=100, value=int(selected_data["Age"]))
+            new_gender = st.selectbox("Edit Gender", ["Male", "Female"], index=["Male", "Female"].index(selected_data["Gender"]))
+            new_status = st.selectbox("Edit Patient Status", ["Stable", "Critical", "Under Observation", "Discharged"], index=["Stable", "Critical", "Under Observation", "Discharged"].index(selected_data["Patient Status"]))
+            edit_submit = st.form_submit_button("Update Patient")
+
+        if edit_submit:
+            worksheet.update(f"C{selected_row + 2}", new_age)
+            worksheet.update(f"A{selected_row + 2}", new_name)
+            worksheet.update(f"B{selected_row + 2}", new_ic)
+            worksheet.update(f"D{selected_row + 2}", new_gender)
+            worksheet.update(f"H{selected_row + 2}", new_status)
+            malaysia_time = datetime.now(pytz.timezone("Asia/Kuala_Lumpur")).strftime("%Y-%m-%d %H:%M:%S")
+            worksheet.update(f"I{selected_row + 2}", malaysia_time)
+            st.success(f"Updated patient record for {new_name}.")
+
+        if st.button("Delete Patient"):
+            # Clear patient data but keep the row
+            worksheet.update(f"A{selected_row + 2}:I{selected_row + 2}", [[""] * 9])
+            st.success(f"Deleted patient record for {selected_name}.")
+else:
+    st.info("No patients available to edit or delete.")
+
 # Offer a button to register another patient
 if st.button("Register Another Patient"):
     st.session_state.page = 1
