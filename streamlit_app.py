@@ -103,11 +103,12 @@ if not df.empty:
             edit_submit = st.form_submit_button("Update Patient")
 
         if edit_submit:
-            worksheet.update(f"C{selected_row + 2}", new_age)
-            worksheet.update(f"A{selected_row + 2}", new_name)
-            worksheet.update(f"B{selected_row + 2}", new_ic)
-            worksheet.update(f"D{selected_row + 2}", new_gender)
-            worksheet.update(f"H{selected_row + 2}", new_status)
+            worksheet.update(f"A{selected_row + 2}", [[new_name]])
+            worksheet.update(f"B{selected_row + 2}", [[new_ic]])
+            worksheet.update(f"C{selected_row + 2}", [[new_age]])
+            worksheet.update(f"D{selected_row + 2}", [[new_gender]])
+            worksheet.update(f"H{selected_row + 2}", [[new_status]])
+            worksheet.update(f"I{selected_row + 2}", [[malaysia_time]])
             malaysia_time = datetime.now(pytz.timezone("Asia/Kuala_Lumpur")).strftime("%Y-%m-%d %H:%M:%S")
             worksheet.update(f"I{selected_row + 2}", malaysia_time)
             st.success(f"Updated patient record for {new_name}.")
