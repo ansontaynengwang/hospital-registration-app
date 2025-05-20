@@ -43,28 +43,33 @@ st.title("Pekan Hospital Patient Registration")
 if st.session_state.page == 1:
     st.header("Step 1: Basic Patient Information")
     with st.form("basic_info_form"):
-        name = st.text_input("Patient Full Name*", key="name")
-        ic_number = st.text_input("IC Number*", key="ic_number")
+        name = st.text_input("Patient Full Name*", key="name").upper().strip()
+        ic_number = st.text_input("IC Number*", key="ic_number").strip()
         age = st.number_input("Age*", min_value=1, max_value=100, key="age")
         gender = st.selectbox("Gender*", ["Select", "Male", "Female"], key="gender")
         next_clicked = st.form_submit_button("Next")
 
     if next_clicked:
+        existing_names = df["Patient Full Name"].str.upper().tolist() if not df.empty else []
+        existing_ics = df["IC Number"].str.strip().tolist() if not df.empty else []
+
         if not name or not ic_number or gender == "Select":
             st.error("Please fill in all required fields.")
+        elif not ic_number.isdigit() or len(ic_number) != 12:
+            st.error("IC Number must be exactly 12 digits and numeric.")
+        elif ic_number in existing_ics:
+            st.warning(f"The IC number '{ic_number}' is already registered.")
+        elif name in existing_names:
+            st.warning(f"The patient name '{name}' is already registered.")
         else:
-            existing_names = df["Patient Full Name"].str.lower().tolist() if not df.empty else []
-            if name.lower() in existing_names:
-                st.warning(f"The patient name '{name}' is already registered.")
-            else:
-                st.session_state.patient_data = {
-                    "name": name,
-                    "ic_number": ic_number,
-                    "age": age,
-                    "gender": gender
-                }
-                st.session_state.page = 2
-                st.rerun()
+            st.session_state.patient_data = {
+                "name": name,
+                "ic_number": ic_number,
+                "age": age,
+                "gender": gender
+            }
+            st.session_state.page = 2
+            st.rerun()
 
 # Step 2: Admission Info
 elif st.session_state.page == 2:
@@ -120,8 +125,8 @@ if not df.empty:
         selected_data = df.loc[selected_row_index]
 
         with st.form("edit_form"):
-            new_name = st.text_input("Edit Name", value=selected_data["Patient Full Name"])
-            new_ic = st.text_input("Edit IC Number", value=selected_data["IC Number"])
+            new_name = st.text_input("Edit Name", value=selected_data["Patient Full Name"]).upper().strip()
+            new_ic = st.text_input("Edit IC Number", value=selected_data["IC Number"]).strip()
             new_age = st.number_input("Edit Age", min_value=1, max_value=100, value=int(selected_data["Age"]))
             new_gender = st.selectbox("Edit Gender", ["Male", "Female"],
                                       index=["Male", "Female"].index(selected_data["Gender"]))
@@ -130,19 +135,26 @@ if not df.empty:
             edit_submit = st.form_submit_button("Update Patient")
 
         if edit_submit:
-            time_now = get_malaysia_time()
-            update_row = selected_row_index + 2
+            # Check for IC duplicates except for current row
+            existing_ics = df["IC Number"].drop(index=selected_row_index).str.strip().tolist()
+            if not new_ic.isdigit() or len(new_ic) != 12:
+                st.error("IC Number must be exactly 12 digits and numeric.")
+            elif new_ic in existing_ics:
+                st.error(f"The IC number '{new_ic}' is already registered by another patient.")
+            else:
+                time_now = get_malaysia_time()
+                update_row = selected_row_index + 2
 
-            worksheet.update(f"A{update_row}", [[new_name]])
-            worksheet.update(f"B{update_row}", [[new_ic]])
-            worksheet.update(f"C{update_row}", [[new_age]])
-            worksheet.update(f"D{update_row}", [[new_gender]])
-            worksheet.update(f"H{update_row}", [[new_status]])
-            worksheet.update(f"I{update_row}", [[time_now]])
+                worksheet.update(f"A{update_row}", [[new_name]])
+                worksheet.update(f"B{update_row}", [[new_ic]])
+                worksheet.update(f"C{update_row}", [[new_age]])
+                worksheet.update(f"D{update_row}", [[new_gender]])
+                worksheet.update(f"H{update_row}", [[new_status]])
+                worksheet.update(f"I{update_row}", [[time_now]])
 
-            st.success(f"Updated patient record for {new_name}.")
-            time.sleep(2)
-            st.rerun()
+                st.success(f"Updated patient record for {new_name}.")
+                time.sleep(2)
+                st.rerun()
 
         if st.button("Delete Patient"):
             try:
