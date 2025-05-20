@@ -4,6 +4,7 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime
 import pytz
 import pandas as pd
+import time
 
 # Get current Malaysia time
 def get_malaysia_time():
