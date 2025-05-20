@@ -155,6 +155,7 @@ else:
 if st.button("Register Another Patient"):
     st.session_state.page = 1
     st.session_state.patient_data = {}
+    time.sleep(2)
     st.rerun()
 
 # Display data
