@@ -36,23 +36,26 @@ st.title("Pekan Hospital Patient Registration")
 # Step 1: Basic Info
 if st.session_state.page == 1:
     st.header("Step 1: Basic Patient Information")
-    name = st.text_input("Patient Full Name*")
-    ic_number = st.text_input("IC Number*")
-    age = st.number_input("Age*", min_value=1, max_value=100)
-    gender = st.selectbox("Gender*", ["Select", "Male", "Female"])
 
-    if st.button("Next"):
+    with st.form("basic_info_form"):
+        name = st.text_input("Patient Full Name*", key="name")
+        ic_number = st.text_input("IC Number*", key="ic_number")
+        age = st.number_input("Age*", min_value=1, max_value=100, key="age")
+        gender = st.selectbox("Gender*", ["Select", "Male", "Female"], key="gender")
+        next_clicked = st.form_submit_button("Next")
+
+    if next_clicked:
         if not name or not ic_number or gender == "Select":
-        st.error("Please fill in all required fields.")
+            st.error("Please fill in all required fields.")
         else:
-        st.session_state.patient_data = {
-            "name": name,
-            "ic_number": ic_number,
-            "age": age,
-            "gender": gender
+            st.session_state.patient_data = {
+                "name": name,
+                "ic_number": ic_number,
+                "age": age,
+                "gender": gender
             }
-            st.session_state.page = 2 
-
+            st.session_state.page = 2
+ 
 
 # Step 2: Admission Info
 elif st.session_state.page == 2:
