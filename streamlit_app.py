@@ -131,6 +131,7 @@ else:
 if st.button("Register Another Patient"):
     st.session_state.page = 1
     st.session_state.patient_data = {}
+    st.rerun()
 
 # Display existing patients
 st.markdown("### Existing Patients")
