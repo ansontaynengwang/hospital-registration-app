@@ -5,13 +5,13 @@ from datetime import datetime
 import pytz
 import pandas as pd
 
-
+# Get current Malaysia time
 malaysia_time = datetime.now(pytz.timezone("Asia/Kuala_Lumpur")).strftime("%Y-%m-%d %H:%M:%S")
 
 # Display hospital image
 st.image("https://review.ibanding.com/company/1532441453.jpg", caption="Pekan Hospital", use_container_width=True)
 
-# Set up credentials using st.secrets
+# Google Sheets authentication
 scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
 creds_dict = st.secrets["google_sheets"]
 creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
@@ -33,7 +33,7 @@ if "patient_data" not in st.session_state:
 
 st.title("Pekan Hospital Patient Registration")
 
-# Step 1: Basic Info
+# Step 1: Basic Patient Info
 if st.session_state.page == 1:
     st.header("Step 1: Basic Patient Information")
 
@@ -48,14 +48,18 @@ if st.session_state.page == 1:
         if not name or not ic_number or gender == "Select":
             st.error("Please fill in all required fields.")
         else:
-            st.session_state.patient_data = {
-                "name": name,
-                "ic_number": ic_number,
-                "age": age,
-                "gender": gender
-            }
-            st.session_state.page = 2
-            st.rerun()
+            existing_names = df["Patient Full Name"].str.lower().tolist() if not df.empty else []
+            if name.lower() in existing_names:
+                st.warning(f"The patient name '{name}' is already registered.")
+            else:
+                st.session_state.patient_data = {
+                    "name": name,
+                    "ic_number": ic_number,
+                    "age": age,
+                    "gender": gender
+                }
+                st.session_state.page = 2
+                st.rerun()
 
 # Step 2: Admission Info
 elif st.session_state.page == 2:
@@ -69,25 +73,22 @@ elif st.session_state.page == 2:
         patient = st.session_state.patient_data
         malaysia_time = datetime.now(pytz.timezone("Asia/Kuala_Lumpur")).strftime("%Y-%m-%d %H:%M:%S")
 
-        # Check for duplicates
-        existing_names = df["Patient Full Name"].str.lower().tolist() if not df.empty else []
-        if patient["name"].lower() in existing_names:
-            st.warning(f"The patient name '{patient['name']}' is already registered.")
-        else:
-            worksheet.append_row([
-                patient["name"],
-                patient["ic_number"],
-                patient["age"],
-                patient["gender"],
-                wad_num,
-                bed_num,
-                floor,
-                status,
-                malaysia_time
-            ])
-            st.success(f"Patient {patient['name']} registered successfully at {malaysia_time}.")
-            st.info("Please refresh the page to see the updated patient list.")
+        worksheet.append_row([
+            patient["name"],
+            patient["ic_number"],
+            patient["age"],
+            patient["gender"],
+            wad_num,
+            bed_num,
+            floor,
+            status,
+            malaysia_time
+        ])
 
+        st.success(f"Patient {patient['name']} registered successfully at {malaysia_time}.")
+        st.info("Please refresh the page to see the updated patient list.")
+
+# Edit/Delete Section
 st.markdown("### Edit or Delete Patient")
 
 if not df.empty:
@@ -105,7 +106,8 @@ if not df.empty:
             new_ic = st.text_input("Edit IC Number", value=selected_data["IC Number"])
             new_age = st.number_input("Edit Age", min_value=1, max_value=100, value=int(selected_data["Age"]))
             new_gender = st.selectbox("Edit Gender", ["Male", "Female"], index=["Male", "Female"].index(selected_data["Gender"]))
-            new_status = st.selectbox("Edit Patient Status", ["Stable", "Critical", "Under Observation", "Discharged"], index=["Stable", "Critical", "Under Observation", "Discharged"].index(selected_data["Patient Status"]))
+            new_status = st.selectbox("Edit Patient Status", ["Stable", "Critical", "Under Observation", "Discharged"],
+                                      index=["Stable", "Critical", "Under Observation", "Discharged"].index(selected_data["Patient Status"]))
             edit_submit = st.form_submit_button("Update Patient")
 
         if edit_submit:
@@ -127,13 +129,11 @@ if not df.empty:
 else:
     st.info("No patients available to edit or delete.")
 
-# Offer a button to register another patient
+# Restart registration
 if st.button("Register Another Patient"):
     st.session_state.page = 1
     st.session_state.patient_data = {}
-    st.rerun()
 
-# Display existing patients
+# Display patient table
 st.markdown("### Existing Patients")
 st.dataframe(df)
-
