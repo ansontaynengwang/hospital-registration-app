@@ -21,9 +21,10 @@ client = gspread.authorize(creds)
 sheet = client.open("Patient")
 worksheet = sheet.worksheet("Patient")
 
-# Read existing data
+# Read existing data and remove fully empty rows
 data = worksheet.get_all_records()
 df = pd.DataFrame(data)
+df = df[df.apply(lambda row: any(pd.notna(row) & (row != "")), axis=1)]  # Remove empty rows
 
 # Initialize session state
 if "page" not in st.session_state:
@@ -121,10 +122,12 @@ if not df.empty:
             worksheet.update(f"I{selected_row + 2}", [[malaysia_time]])
 
             st.success(f"Updated patient record for {new_name}.")
+            st.rerun()
 
         if st.button("Delete Patient"):
-            worksheet.update(f"A{selected_row + 2}:I{selected_row + 2}", [[""] * 9])
+            worksheet.delete_rows(selected_row + 2)
             st.success(f"Deleted patient record for {selected_name}.")
+            st.rerun()
 
 else:
     st.info("No patients available to edit or delete.")
@@ -133,6 +136,7 @@ else:
 if st.button("Register Another Patient"):
     st.session_state.page = 1
     st.session_state.patient_data = {}
+    st.rerun()
 
 # Display patient table
 st.markdown("### Existing Patients")
