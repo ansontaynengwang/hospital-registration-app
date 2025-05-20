@@ -104,6 +104,8 @@ elif st.session_state.page == 2:
 
         st.success(f"Patient {patient['name']} registered successfully at {time_now}.")
         st.info("Please refresh the page to see the updated patient list.")
+        time.sleep(2)
+        st.rerun()
 
 # Edit/Delete Section
 st.markdown("### Edit or Delete Patient")
@@ -139,6 +141,7 @@ if not df.empty:
             worksheet.update(f"I{update_row}", [[time_now]])
 
             st.success(f"Updated patient record for {new_name}.")
+            time.sleep(2)
             st.rerun()
 
         if st.button("Delete Patient"):
