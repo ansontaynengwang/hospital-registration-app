@@ -5,6 +5,9 @@ from datetime import datetime
 import pytz
 import pandas as pd
 
+
+malaysia_time = datetime.now(pytz.timezone("Asia/Kuala_Lumpur")).strftime("%Y-%m-%d %H:%M:%S")
+
 # Display hospital image
 st.image("https://review.ibanding.com/company/1532441453.jpg", caption="Pekan Hospital", use_container_width=True)
 
