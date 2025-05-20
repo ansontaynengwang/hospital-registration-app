@@ -64,7 +64,7 @@ elif st.session_state.page == 2:
         malaysia_time = datetime.now(pytz.timezone("Asia/Kuala_Lumpur")).strftime("%Y-%m-%d %H:%M:%S")
 
         # Check for duplicates
-        existing_names = df["Patient Name"].str.lower().tolist() if not df.empty else []
+        existing_names = df["Patient Full Name"].str.lower().tolist() if not df.empty else []
         if patient["name"].lower() in existing_names:
             st.warning(f"The patient name '{patient['name']}' is already registered.")
         else:
