@@ -145,7 +145,7 @@ if not df.empty:
                 worksheet.delete_rows(int(selected_row_index) + 2)
                 st.success(f"Deleted patient record for {selected_name}.")
                 st.rerun()
-        except Exception as e:
+            except Exception as e:
                 st.error(f"Error deleting row: {e}")
 
 else:
