@@ -22,17 +22,13 @@ client = gspread.authorize(creds)
 sheet = client.open("Patient")
 worksheet = sheet.worksheet("Patient")
 
-# Read existing data and clean it (remove fully empty or corrupted rows)
+# Read and clean data
 data = worksheet.get_all_values()
 headers = data[0]
 rows = data[1:]
-
-# Remove rows that are entirely empty
 clean_rows = [row for row in rows if any(cell.strip() for cell in row)]
-
-# Convert to DataFrame
 df = pd.DataFrame(clean_rows, columns=headers)
-df = df[df["Patient Full Name"].str.strip().astype(bool)]  # Drop rows with empty patient name
+df = df[df["Patient Full Name"].str.strip().astype(bool)]
 
 # Initialize session state
 if "page" not in st.session_state:
@@ -81,7 +77,7 @@ elif st.session_state.page == 2:
         patient = st.session_state.patient_data
         time_now = get_malaysia_time()
 
-        worksheet.append_row([
+        new_row = [
             patient["name"],
             patient["ic_number"],
             patient["age"],
@@ -91,7 +87,20 @@ elif st.session_state.page == 2:
             floor,
             status,
             time_now
-        ])
+        ]
+
+        # Find first empty row
+        empty_row_index = None
+        for i, row in enumerate(rows, start=2):
+            if len(row) < 9 or all(cell.strip() == "" for cell in row[:9]):
+                empty_row_index = i
+                break
+
+        if empty_row_index:
+            worksheet.update(f"A{empty_row_index}:I{empty_row_index}", [new_row])
+        else:
+            worksheet.append_row(new_row)
+
         st.success(f"Patient {patient['name']} registered successfully at {time_now}.")
         st.info("Please refresh the page to see the updated patient list.")
 
@@ -119,7 +128,7 @@ if not df.empty:
 
         if edit_submit:
             time_now = get_malaysia_time()
-            update_row = selected_row_index + 2  # offset for header
+            update_row = selected_row_index + 2
 
             worksheet.update(f"A{update_row}", [[new_name]])
             worksheet.update(f"B{update_row}", [[new_ic]])
