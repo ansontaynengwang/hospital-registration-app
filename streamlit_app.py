@@ -80,6 +80,7 @@ elif st.session_state.page == 2:
                 malaysia_time
             ])
             st.success(f"Patient {patient['name']} registered successfully at {malaysia_time}.")
+            st.info("Please refresh the page to see the updated patient list.")
 
 # Offer a button to register another patient
 if st.button("Register Another Patient"):
@@ -89,5 +90,4 @@ if st.button("Register Another Patient"):
 # Display existing patients
 st.markdown("### Existing Patients")
 st.dataframe(df)
-st.info("Please refresh the page to see the updated patient list.")
 
