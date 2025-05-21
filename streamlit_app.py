@@ -70,9 +70,9 @@ if st.session_state.page == 1:
 elif st.session_state.page == 2:
     st.header("Step 2: Admission Details")
     wad_options = ["1A", "2A", "3A", "3B", "CCU", "ICU"]
-    wad_num = st.number_input("Wad Number*", wad_options, key="wad_num")
+    wad_num = st.selectbox("Wad Number*", wad_options, key="wad_num")
     bed_num = st.number_input("Bed Number*", min_value=1, max_value=120, key="bed_num")
-    floor = st.selectbox("Floor*", ["1A", "2A", "3A", "3B", "CCU", "ICU"], key="floor_selectbox")
+    floor = st.selectbox("Floor*", ["1", "2", "3", "4", "5"], key="floor_selectbox")
     status = st.selectbox("Patient Status*", ["Stable", "Critical", "Under Observation", "Discharged"], key="status")
 
     if st.button("Submit"):
