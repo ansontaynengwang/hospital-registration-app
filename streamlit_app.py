@@ -54,8 +54,12 @@ if st.session_state.page == 1:
             st.error("Please fill in all required fields.")
         else:
             existing_names = df["Patient Full Name"].str.lower().tolist() if not df.empty else []
+            existing_ics = df["IC Number"].str.strip().tolist() if not df.empty else []
+
             if name.lower() in existing_names:
                 st.warning(f"The patient name '{name}' is already registered.")
+            elif ic_number.strip() in existing_ics:
+                st.warning(f"The IC number '{ic_number}' is already registered.")
             else:
                 st.session_state.patient_data = {
                     "name": name.upper(),
@@ -65,6 +69,7 @@ if st.session_state.page == 1:
                 }
                 st.session_state.page = 2
                 st.rerun()
+
 
 # Step 2: Admission Info
 elif st.session_state.page == 2:
@@ -129,7 +134,12 @@ if not df.empty:
                                       index=["Stable", "Critical", "Under Observation", "Discharged"].index(selected_data["Patient Status"]))
             edit_submit = st.form_submit_button("Update Patient")
 
-        if edit_submit:
+        # Check for duplicate IC (excluding the current row)
+        duplicate_ic = df[(df["IC Number"].str.strip() == new_ic.strip()) & (df.index != selected_row_index)]
+
+        if not duplicate_ic.empty:
+            st.warning(f"The IC number '{new_ic}' is already used by another patient.")
+        else:
             time_now = get_malaysia_time()
             update_row = selected_row_index + 2
 
