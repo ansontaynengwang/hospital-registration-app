@@ -29,6 +29,7 @@ headers = data[0]
 rows = data[1:]
 clean_rows = [row for row in rows if any(cell.strip() for cell in row)]
 df = pd.DataFrame(clean_rows, columns=headers)
+df.columns = df.columns.str.strip()  # Ensure headers are clean
 df = df[df["Patient Full Name"].str.strip().astype(bool)]
 
 # Initialize session state
@@ -38,6 +39,8 @@ if "patient_data" not in st.session_state:
     st.session_state.patient_data = {}
 
 st.title("Pekan Hospital Patient Registration")
+
+floor_options = ["1A", "2A", "3A", "3B", "CCU", "ICU"]  # Defined once
 
 # Step 1: Basic Info
 if st.session_state.page == 1:
@@ -69,10 +72,10 @@ if st.session_state.page == 1:
 # Step 2: Admission Info
 elif st.session_state.page == 2:
     st.header("Step 2: Admission Details")
-    wad_num = st.number_input("Wad Number*", min_value=1, max_value=120)
-    bed_num = st.number_input("Bed Number*", min_value=1, max_value=120)
-    floor = st.selectbox("Floor*", ["1A", "2A", "3A", "3B", "CCU", "ICU"])
-    status = st.selectbox("Patient Status*", ["Stable", "Critical", "Under Observation", "Discharged"])
+    wad_num = st.number_input("Wad Number*", min_value=1, max_value=120, key="wad_num")
+    bed_num = st.number_input("Bed Number*", min_value=1, max_value=120, key="bed_num")
+    floor = st.selectbox("Floor*", floor_options, key="admission_floor")
+    status = st.selectbox("Patient Status*", ["Stable", "Critical", "Under Observation", "Discharged"], key="status")
 
     if st.button("Submit"):
         patient = st.session_state.patient_data
@@ -111,7 +114,6 @@ elif st.session_state.page == 2:
 st.markdown("### Edit or Delete Patient")
 
 if not df.empty:
-    df.columns = df.columns.str.strip()
     patient_names = df["Patient Full Name"].dropna().tolist()
     selected_name = st.selectbox("Select a patient to edit or delete", patient_names)
 
@@ -120,13 +122,20 @@ if not df.empty:
         selected_data = df.loc[selected_row_index]
 
         with st.form("edit_form"):
-            new_name = st.text_input("Edit Name", value=selected_data["Patient Full Name"])
-            new_ic = st.text_input("Edit IC Number", value=selected_data["IC Number"])
-            new_age = st.number_input("Edit Age", min_value=1, max_value=100, value=int(selected_data["Age"]))
+            new_name = st.text_input("Edit Name", value=selected_data["Patient Full Name"], key="edit_name")
+            new_ic = st.text_input("Edit IC Number", value=selected_data["IC Number"], key="edit_ic")
+            new_age = st.number_input("Edit Age", min_value=1, max_value=100, value=int(selected_data["Age"]), key="edit_age")
             new_gender = st.selectbox("Edit Gender", ["Male", "Female"],
-                                      index=["Male", "Female"].index(selected_data["Gender"]))
+                                      index=["Male", "Female"].index(selected_data["Gender"]), key="edit_gender")
+
+            # Handle floor selection safely
+            selected_floor = selected_data.get("Floor", "")
+            floor_index = floor_options.index(selected_floor) if selected_floor in floor_options else 0
+            new_floor = st.selectbox("Edit Floor", floor_options, index=floor_index, key="edit_floor")
+
             new_status = st.selectbox("Edit Patient Status", ["Stable", "Critical", "Under Observation", "Discharged"],
-                                      index=["Stable", "Critical", "Under Observation", "Discharged"].index(selected_data["Patient Status"]))
+                                      index=["Stable", "Critical", "Under Observation", "Discharged"].index(selected_data["Patient Status"]), key="edit_status")
+
             edit_submit = st.form_submit_button("Update Patient")
 
         if edit_submit:
@@ -137,6 +146,7 @@ if not df.empty:
             worksheet.update(f"B{update_row}", [[new_ic]])
             worksheet.update(f"C{update_row}", [[new_age]])
             worksheet.update(f"D{update_row}", [[new_gender]])
+            worksheet.update(f"G{update_row}", [[new_floor]])
             worksheet.update(f"H{update_row}", [[new_status]])
             worksheet.update(f"I{update_row}", [[time_now]])
 
@@ -152,7 +162,6 @@ if not df.empty:
                 st.rerun()
             except Exception as e:
                 st.error(f"Error deleting row: {e}")
-
 else:
     st.info("No patients available to edit or delete.")
 
