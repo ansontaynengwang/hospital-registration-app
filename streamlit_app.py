@@ -69,10 +69,10 @@ if st.session_state.page == 1:
 # Step 2: Admission Info
 elif st.session_state.page == 2:
     st.header("Step 2: Admission Details")
-    wad_num = st.number_input("Wad Number*", min_value=1, max_value=120, key="wad_num")
+    wad_options = ["1A", "2A", "3A", "3B", "CCU", "ICU"]
+    wad_num = st.number_input("Wad Number*", wad_options, key="wad_num")
     bed_num = st.number_input("Bed Number*", min_value=1, max_value=120, key="bed_num")
-    floor_options = ["1A", "2A", "3A", "3B", "CCU", "ICU"]
-    floor = st.selectbox("Floor*", floor_options, key="floor_selectbox")
+    floor = st.selectbox("Floor*", ["1A", "2A", "3A", "3B", "CCU", "ICU"], key="floor_selectbox")
     status = st.selectbox("Patient Status*", ["Stable", "Critical", "Under Observation", "Discharged"], key="status")
 
     if st.button("Submit"):
@@ -104,7 +104,6 @@ elif st.session_state.page == 2:
             worksheet.append_row(new_row)
 
         st.success(f"Patient {patient['name']} registered successfully at {time_now}.")
-        st.info("Please refresh the page to see the updated patient list.")
         time.sleep(2)
         st.rerun()
 
@@ -134,7 +133,7 @@ if not df.empty:
             time_now = get_malaysia_time()
             update_row = selected_row_index + 2
 
-            worksheet.update(f"A{update_row}", [[new_name]])
+            worksheet.update(f"A{update_row}", [[new_name.upper()]])
             worksheet.update(f"B{update_row}", [[new_ic]])
             worksheet.update(f"C{update_row}", [[new_age]])
             worksheet.update(f"D{update_row}", [[new_gender]])
