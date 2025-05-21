@@ -180,5 +180,4 @@ if st.button("Register Another Patient"):
 
 # Display data
 st.markdown("### Existing Patients")
-df["Patient Full Name"] = df["Patient Full Name"].str.upper()
 st.dataframe(df)
