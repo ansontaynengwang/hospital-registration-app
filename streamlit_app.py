@@ -58,7 +58,7 @@ if st.session_state.page == 1:
                 st.warning(f"The patient name '{name}' is already registered.")
             else:
                 st.session_state.patient_data = {
-                    "name": name,
+                    "name": name.upper(),
                     "ic_number": ic_number,
                     "age": age,
                     "gender": gender
@@ -71,11 +71,8 @@ elif st.session_state.page == 2:
     st.header("Step 2: Admission Details")
     wad_num = st.number_input("Wad Number*", min_value=1, max_value=120, key="wad_num")
     bed_num = st.number_input("Bed Number*", min_value=1, max_value=120, key="bed_num")
-
-    # Correct floor options
     floor_options = ["1A", "2A", "3A", "3B", "CCU", "ICU"]
     floor = st.selectbox("Floor*", floor_options, key="floor_selectbox")
-
     status = st.selectbox("Patient Status*", ["Stable", "Critical", "Under Observation", "Discharged"], key="status")
 
     if st.button("Submit"):
