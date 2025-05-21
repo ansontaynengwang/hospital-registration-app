@@ -24,12 +24,16 @@ sheet = client.open("Patient")
 worksheet = sheet.worksheet("Patient")
 
 # Read and clean data
-data = worksheet.get_all_values()
-headers = data[0]
-rows = data[1:]
-clean_rows = [row for row in rows if any(cell.strip() for cell in row)]
-df = pd.DataFrame(clean_rows, columns=headers)
-df = df[df["Patient Full Name"].str.strip().astype(bool)]
+def load_patient_data():
+    data = worksheet.get_all_values()
+    headers = data[0]
+    rows = data[1:]
+    clean_rows = [row for row in rows if any(cell.strip() for cell in row)]
+    df = pd.DataFrame(clean_rows, columns=headers)
+    df = df[df["Patient Full Name"].str.strip().astype(bool)]
+    return df
+
+df = load_patient_data()
 
 # Initialize session state
 if "page" not in st.session_state:
@@ -53,8 +57,9 @@ if st.session_state.page == 1:
         if not name or not ic_number or gender == "Select":
             st.error("Please fill in all required fields.")
         else:
-            existing_names = df["Patient Full Name"].str.lower().tolist() if not df.empty else []
-            existing_ics = df["IC Number"].str.strip().tolist() if not df.empty else []
+            df = load_patient_data()
+            existing_names = df["Patient Full Name"].str.lower().tolist()
+            existing_ics = df["IC Number"].str.strip().tolist()
 
             if name.lower() in existing_names:
                 st.warning(f"The patient name '{name}' is already registered.")
@@ -63,13 +68,12 @@ if st.session_state.page == 1:
             else:
                 st.session_state.patient_data = {
                     "name": name.upper(),
-                    "ic_number": ic_number,
+                    "ic_number": ic_number.strip(),
                     "age": age,
                     "gender": gender
                 }
                 st.session_state.page = 2
                 st.rerun()
-
 
 # Step 2: Admission Info
 elif st.session_state.page == 2:
@@ -96,7 +100,8 @@ elif st.session_state.page == 2:
             time_now
         ]
 
-        # Find first empty row
+        data = worksheet.get_all_values()
+        rows = data[1:]
         empty_row_index = None
         for i, row in enumerate(rows, start=2):
             if len(row) < 9 or all(cell.strip() == "" for cell in row[:9]):
@@ -115,6 +120,7 @@ elif st.session_state.page == 2:
 # Edit/Delete Section
 st.markdown("### Edit or Delete Patient")
 
+df = load_patient_data()
 if not df.empty:
     df.columns = df.columns.str.strip()
     patient_names = df["Patient Full Name"].dropna().tolist()
@@ -134,25 +140,26 @@ if not df.empty:
                                       index=["Stable", "Critical", "Under Observation", "Discharged"].index(selected_data["Patient Status"]))
             edit_submit = st.form_submit_button("Update Patient")
 
-        # Check for duplicate IC (excluding the current row)
-        duplicate_ic = df[(df["IC Number"].str.strip() == new_ic.strip()) & (df.index != selected_row_index)]
+        if edit_submit:
+            df = load_patient_data()
+            duplicate_ic = df[(df["IC Number"].str.strip() == new_ic.strip()) & (df.index != selected_row_index)]
 
-        if not duplicate_ic.empty:
-            st.warning(f"The IC number '{new_ic}' is already used by another patient.")
-        else:
-            time_now = get_malaysia_time()
-            update_row = selected_row_index + 2
+            if not duplicate_ic.empty:
+                st.warning(f"The IC number '{new_ic}' is already used by another patient.")
+            else:
+                time_now = get_malaysia_time()
+                update_row = selected_row_index + 2
 
-            worksheet.update(f"A{update_row}", [[new_name.upper()]])
-            worksheet.update(f"B{update_row}", [[new_ic]])
-            worksheet.update(f"C{update_row}", [[new_age]])
-            worksheet.update(f"D{update_row}", [[new_gender]])
-            worksheet.update(f"H{update_row}", [[new_status]])
-            worksheet.update(f"I{update_row}", [[time_now]])
+                worksheet.update(f"A{update_row}", [[new_name.upper()]])
+                worksheet.update(f"B{update_row}", [[new_ic.strip()]])
+                worksheet.update(f"C{update_row}", [[new_age]])
+                worksheet.update(f"D{update_row}", [[new_gender]])
+                worksheet.update(f"H{update_row}", [[new_status]])
+                worksheet.update(f"I{update_row}", [[time_now]])
 
-            st.success(f"Updated patient record for {new_name}.")
-            time.sleep(2)
-            st.rerun()
+                st.success(f"Updated patient record for {new_name}.")
+                time.sleep(2)
+                st.rerun()
 
         if st.button("Delete Patient"):
             try:
@@ -162,7 +169,6 @@ if not df.empty:
                 st.rerun()
             except Exception as e:
                 st.error(f"Error deleting row: {e}")
-
 else:
     st.info("No patients available to edit or delete.")
 
@@ -174,4 +180,5 @@ if st.button("Register Another Patient"):
 
 # Display data
 st.markdown("### Existing Patients")
+df["Patient Full Name"] = df["Patient Full Name"].str.upper()
 st.dataframe(df)
