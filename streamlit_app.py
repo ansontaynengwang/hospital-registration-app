@@ -35,7 +35,7 @@ def load_patient_data():
 
 df = load_patient_data()
 
-st.title("Pekan Hospital Patient Registration System")
+st.title("Pekan Hospital")
 st.sidebar.title("Navigation")
 menu_option = st.sidebar.radio("Choose an action:", ["Register Patient", "Edit/Delete Patient"])
 
@@ -48,6 +48,7 @@ if menu_option == "Register Patient":
 
     # Step 1: Basic Info
     if st.session_state.page == 1:
+        st.header("Pekan Hospital Patient Registration System")
         st.subheader("Step 1: Basic Patient Information")
         with st.form("basic_info_form"):
             name = st.text_input("Patient Full Name*", key="name")
