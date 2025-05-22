@@ -190,8 +190,8 @@ elif menu_option == "Edit/Delete Patient 📝":
                 with col2:
                     if st.button("❌ No, cancel"):
                         st.info("❎ Update cancelled.")
-                        del st.session_state.edit_pending
                         time.sleep(2)
+                        del st.session_state.edit_pending
                         st.rerun()
 
             if st.button("Delete Patient"):
