@@ -191,6 +191,8 @@ elif menu_option == "Edit/Delete Patient 📝":
                     if st.button("❌ No, cancel"):
                         st.info("❎ Update cancelled.")
                         del st.session_state.edit_pending
+                        time.sleep(2)
+                        st.rerun
 
             if st.button("Delete Patient"):
                 st.write("Are you sure you want to delete this patient record?")
