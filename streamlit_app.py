@@ -161,7 +161,7 @@ elif menu_option == "Edit/Delete Patient 📝":
                 with col2:
                     confirm_no = st.button("❌ No, cancel", key="confirm_no")
                     
-                    if confirm_yes:
+                if confirm_yes:
                     df = load_patient_data()
                     duplicate_ic = df[(df["IC Number"].str.strip() == new_ic.strip()) & (df.index != selected_row_index)]
 
