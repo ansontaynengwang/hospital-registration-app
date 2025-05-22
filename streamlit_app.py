@@ -33,6 +33,7 @@ def load_patient_data():
     df = df[df["Patient Full Name"].str.strip().astype(bool)]
     return df
 
+# Load patient data
 df = load_patient_data()
 
 st.title("Pekan Hospital")
@@ -46,7 +47,6 @@ if menu_option == "Register Patient 🤒":
     if "patient_data" not in st.session_state:
         st.session_state.patient_data = {}
 
-    # Step 1: Basic Info
     if st.session_state.page == 1:
         st.header("Patient Registration System")
         st.subheader("Step 1: Basic Patient Information")
@@ -79,7 +79,6 @@ if menu_option == "Register Patient 🤒":
                     st.session_state.page = 2
                     st.rerun()
 
-    # Step 2: Admission Info
     elif st.session_state.page == 2:
         st.subheader("Step 2: Admission Details")
         wad_options = ["1A", "2A", "3A", "3B", "CCU", "ICU"]
@@ -123,7 +122,6 @@ if menu_option == "Register Patient 🤒":
             st.session_state.patient_data = {}
             st.rerun()
 
-    # Register another patient
     if st.button("Register Another Patient"):
         st.session_state.page = 1
         st.session_state.patient_data = {}
@@ -132,8 +130,8 @@ if menu_option == "Register Patient 🤒":
 # Edit/Delete Section
 elif menu_option == "Edit/Delete Patient 📝":
     st.subheader("Edit or Delete Patient")
-
     df = load_patient_data()
+
     if not df.empty:
         df.columns = df.columns.str.strip()
         patient_names = df["Patient Full Name"].dropna().tolist()
@@ -147,14 +145,12 @@ elif menu_option == "Edit/Delete Patient 📝":
                 new_name = st.text_input("Edit Name", value=selected_data["Patient Full Name"])
                 new_ic = st.text_input("Edit IC Number", value=selected_data["IC Number"])
                 new_age = st.number_input("Edit Age", min_value=1, max_value=100, value=int(selected_data["Age"]))
-                new_gender = st.selectbox("Edit Gender", ["Male", "Female"],
-                                          index=["Male", "Female"].index(selected_data["Gender"]))
+                new_gender = st.selectbox("Edit Gender", ["Male", "Female"], index=["Male", "Female"].index(selected_data["Gender"]))
                 new_status = st.selectbox("Edit Patient Status", ["Stable", "Critical", "Under Observation", "Discharged"],
                                           index=["Stable", "Critical", "Under Observation", "Discharged"].index(selected_data["Patient Status"]))
                 edit_submit = st.form_submit_button("Update Patient")
 
             if edit_submit:
-                # Save new values into session_state
                 st.session_state.edit_pending = {
                     "name": new_name,
                     "ic": new_ic,
@@ -163,53 +159,54 @@ elif menu_option == "Edit/Delete Patient 📝":
                     "status": new_status,
                     "index": selected_row_index
                 }
-            
-            # If edit is pending (stored in session_state), show confirmation buttons
+
             if "edit_pending" in st.session_state:
-                st.write("Are you sure you want to update this patient record?")
+                st.warning("Are you sure you want to update this patient record?")
                 col1, col2 = st.columns(2)
                 with col1:
                     if st.button("✅ Yes, update"):
                         pending = st.session_state.edit_pending
                         df = load_patient_data()
                         duplicate_ic = df[(df["IC Number"].str.strip() == pending["ic"].strip()) & (df.index != pending["index"])]
-            
+
                         if not duplicate_ic.empty:
                             st.warning(f"The IC number '{pending['ic']}' is already used by another patient.")
                         else:
                             time_now = get_malaysia_time()
                             update_row = pending["index"] + 2
-            
+
                             worksheet.update(f"A{update_row}", [[pending["name"].upper()]])
                             worksheet.update(f"B{update_row}", [[pending["ic"].strip()]])
                             worksheet.update(f"C{update_row}", [[pending["age"]]])
                             worksheet.update(f"D{update_row}", [[pending["gender"]]])
                             worksheet.update(f"H{update_row}", [[pending["status"]]])
                             worksheet.update(f"I{update_row}", [[time_now]])
-            
-                            st.success(f"Updated patient record for {pending['name']}.")
-                            time.sleep(2)
+
+                            st.success(f"✅ Updated patient record for {pending['name']} at {time_now}.")
                             del st.session_state.edit_pending
+                            time.sleep(2)
                             st.rerun()
 
                 with col2:
                     if st.button("❌ No, cancel"):
                         st.info("❎ Update cancelled.")
                         del st.session_state.edit_pending
-            
-                        if st.button("Delete Patient"):
-                            confirm_delete = st.radio("Are you sure you want to delete this patient record?", ["No", "Yes"], key="confirm_delete")
-                            if confirm_delete == "Yes":
-                                try:
-                                    worksheet.delete_rows(int(selected_row_index) + 2)
-                                    st.success(f"Deleted patient record for {selected_name}.")
-                                    time.sleep(2)
-                                    st.rerun()
-                                except Exception as e:
-                                    st.error(f"Error deleting row: {e}")
-                            else:
-                                st.info("Deletion cancelled.")
-                    
+
+            if st.button("Delete Patient"):
+                st.write("Are you sure you want to delete this patient record?")
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("🗑️ Yes, delete"):
+                        try:
+                            worksheet.delete_rows(int(selected_row_index) + 2)
+                            st.success(f"Deleted patient record for {selected_name}.")
+                            time.sleep(2)
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Error deleting row: {e}")
+                with col2:
+                    st.info("❎ Deletion cancelled.")
+
 # Display data
 st.markdown("### Existing Patients")
 st.dataframe(df)
