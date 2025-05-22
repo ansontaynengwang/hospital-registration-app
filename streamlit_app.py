@@ -181,8 +181,8 @@ elif menu_option == "Edit/Delete Patient 📝":
                         st.success(f"Updated patient record for {new_name}.")
                         time.sleep(2)
                         st.rerun()
-                    elif confirm_no:
-                        st.info("❎ Update cancelled.")
+                elif confirm_no:
+                    st.info("❎ Update cancelled.")
 
             if st.button("Delete Patient"):
                 confirm_delete = st.radio("Are you sure you want to delete this patient record?", ["No", "Yes"], key="confirm_delete")
