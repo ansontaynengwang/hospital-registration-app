@@ -37,7 +37,6 @@ df = load_patient_data()
 
 st.title("Pekan Hospital")
 st.sidebar.title("Navigation")
-st.sidebar.image("195312c7-8cf2-4bfc-a7d2-c90a66ed4a08.png", caption="Register Patient", width=100)
 menu_option = st.sidebar.radio("Choose an action:", ["Register Patient", "Edit/Delete Patient"])
 
 # Registration Section
