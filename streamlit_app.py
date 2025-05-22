@@ -159,7 +159,7 @@ elif menu_option == "Edit/Delete Patient 📝":
                 with col1:
                     confirm_yes = st.button("✅ Yes, update", key="confirm_yes")
                 with col2:
-                    confirm_no = st.button("❌ No, cancel", key="confirm_no"):
+                    confirm_no = st.button("❌ No, cancel", key="confirm_no")
                     
                     if confirm_yes:
                     df = load_patient_data()
