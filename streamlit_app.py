@@ -154,37 +154,43 @@ elif menu_option == "Edit/Delete Patient":
                 edit_submit = st.form_submit_button("Update Patient")
 
             if edit_submit:
-                df = load_patient_data()
-                duplicate_ic = df[(df["IC Number"].str.strip() == new_ic.strip()) & (df.index != selected_row_index)]
+                confirm_edit = st.radio("Are you sure you want to update this patient record?", ["No", "Yes"])
+                if confirm_edit == "Yes":
+                    df = load_patient_data()
+                    duplicate_ic = df[(df["IC Number"].str.strip() == new_ic.strip()) & (df.index != selected_row_index)]
 
-                if not duplicate_ic.empty:
-                    st.warning(f"The IC number '{new_ic}' is already used by another patient.")
+                    if not duplicate_ic.empty:
+                        st.warning(f"The IC number '{new_ic}' is already used by another patient.")
+                    else:
+                        time_now = get_malaysia_time()
+                        update_row = selected_row_index + 2
+
+                        worksheet.update(f"A{update_row}", [[new_name.upper()]])
+                        worksheet.update(f"B{update_row}", [[new_ic.strip()]])
+                        worksheet.update(f"C{update_row}", [[new_age]])
+                        worksheet.update(f"D{update_row}", [[new_gender]])
+                        worksheet.update(f"H{update_row}", [[new_status]])
+                        worksheet.update(f"I{update_row}", [[time_now]])
+
+                        st.success(f"Updated patient record for {new_name}.")
+                        time.sleep(2)
+                        st.rerun()
                 else:
-                    time_now = get_malaysia_time()
-                    update_row = selected_row_index + 2
-
-                    worksheet.update(f"A{update_row}", [[new_name.upper()]])
-                    worksheet.update(f"B{update_row}", [[new_ic.strip()]])
-                    worksheet.update(f"C{update_row}", [[new_age]])
-                    worksheet.update(f"D{update_row}", [[new_gender]])
-                    worksheet.update(f"H{update_row}", [[new_status]])
-                    worksheet.update(f"I{update_row}", [[time_now]])
-
-                    st.success(f"Updated patient record for {new_name}.")
-                    time.sleep(2)
-                    st.rerun()
+                    st.info("Update cancelled.")
 
             if st.button("Delete Patient"):
-                try:
-                    worksheet.delete_rows(int(selected_row_index) + 2)
-                    st.success(f"Deleted patient record for {selected_name}.")
-                    time.sleep(2)
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Error deleting row: {e}")
-    else:
-        st.info("No patients available to edit or delete.")
-
+                confirm_delete = st.radio("Are you sure you want to delete this patient record?", ["No", "Yes"], key="confirm_delete")
+                if confirm_delete == "Yes":
+                    try:
+                        worksheet.delete_rows(int(selected_row_index) + 2)
+                        st.success(f"Deleted patient record for {selected_name}.")
+                        time.sleep(2)
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Error deleting row: {e}")
+                else:
+                    st.info("Deletion cancelled.")
+                    
 # Display data
 st.markdown("### Existing Patients")
 st.dataframe(df)
