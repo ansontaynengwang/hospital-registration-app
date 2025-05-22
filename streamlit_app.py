@@ -40,7 +40,7 @@ st.sidebar.title("Navigation")
 menu_option = st.sidebar.radio("Choose an action:", ["Register Patient 🤒", "Edit/Delete Patient 📝"])
 
 # Registration Section
-if menu_option == "Register Patient":
+if menu_option == "Register Patient 🤒":
     if "page" not in st.session_state:
         st.session_state.page = 1
     if "patient_data" not in st.session_state:
@@ -130,7 +130,7 @@ if menu_option == "Register Patient":
         st.rerun()
 
 # Edit/Delete Section
-elif menu_option == "Edit/Delete Patient":
+elif menu_option == "Edit/Delete Patient 📝":
     st.subheader("Edit or Delete Patient")
 
     df = load_patient_data()
