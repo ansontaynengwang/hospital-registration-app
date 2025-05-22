@@ -195,14 +195,18 @@ elif menu_option == "Edit/Delete Patient 📝":
                         st.rerun()
 
             if st.button("Delete Patient"):
+                st.session_state.confirm_delete = True
+            
+            if st.session_state.get("confirm_delete", False):
                 st.warning("⚠️ Are you sure you want to delete this patient record?")
                 col1, col2 = st.columns(2)
             
                 with col1:
                     if st.button("🗑️ Yes, delete"):
                         try:
-                            worksheet.delete_rows(int(selected_row_index) + 2)  # Account for header row
+                            worksheet.delete_rows(int(selected_row_index) + 2)
                             st.success(f"🗑️ Deleted patient record for {selected_name}.")
+                            st.session_state.confirm_delete = False
                             time.sleep(2)
                             st.rerun()
                         except Exception as e:
@@ -211,6 +215,7 @@ elif menu_option == "Edit/Delete Patient 📝":
                 with col2:
                     if st.button("❎ No, cancel"):
                         st.info("Deletion cancelled.")
+                        st.session_state.confirm_delete = False
                         time.sleep(2)
                         st.rerun()
 
