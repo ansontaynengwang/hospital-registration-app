@@ -154,8 +154,14 @@ elif menu_option == "Edit/Delete Patient 📝":
                 edit_submit = st.form_submit_button("Update Patient")
 
             if edit_submit:
-                confirm_edit = st.radio("Are you sure you want to update this patient record?", ["No", "Yes"])
-                if confirm_edit == "Yes":
+                st.write("Are you sure you want to update this patient record?")
+                col1, col2 = st.columns(2)
+                with col1:
+                    confirm_yes = st.button("✅ Yes, update", key="confirm_yes")
+                with col2:
+                    confirm_no = st.button("❌ No, cancel", key="confirm_no"):
+                    
+                    if confirm_yes:
                     df = load_patient_data()
                     duplicate_ic = df[(df["IC Number"].str.strip() == new_ic.strip()) & (df.index != selected_row_index)]
 
@@ -175,8 +181,8 @@ elif menu_option == "Edit/Delete Patient 📝":
                         st.success(f"Updated patient record for {new_name}.")
                         time.sleep(2)
                         st.rerun()
-                else:
-                    st.info("Update cancelled.")
+                    elif confirm_no:
+                        st.info("❎ Update cancelled.")
 
             if st.button("Delete Patient"):
                 confirm_delete = st.radio("Are you sure you want to delete this patient record?", ["No", "Yes"], key="confirm_delete")
