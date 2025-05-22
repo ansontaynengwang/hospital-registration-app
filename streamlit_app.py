@@ -123,11 +123,11 @@ if menu_option == "Register Patient":
             st.session_state.patient_data = {}
             st.rerun()
 
-# Register another patient
-if st.button("Register Another Patient"):
-    st.session_state.page = 1
-    st.session_state.patient_data = {}
-    st.rerun()
+    # Register another patient
+    if st.button("Register Another Patient"):
+        st.session_state.page = 1
+        st.session_state.patient_data = {}
+        st.rerun()
 
 # Edit/Delete Section
 elif menu_option == "Edit/Delete Patient":
