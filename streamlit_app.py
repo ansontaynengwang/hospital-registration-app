@@ -123,6 +123,12 @@ if menu_option == "Register Patient":
             st.session_state.patient_data = {}
             st.rerun()
 
+# Register another patient
+if st.button("Register Another Patient"):
+    st.session_state.page = 1
+    st.session_state.patient_data = {}
+    st.rerun()
+
 # Edit/Delete Section
 elif menu_option == "Edit/Delete Patient":
     st.subheader("Edit or Delete Patient")
@@ -178,12 +184,6 @@ elif menu_option == "Edit/Delete Patient":
                     st.error(f"Error deleting row: {e}")
     else:
         st.info("No patients available to edit or delete.")
-
-# Register another patient
-if st.button("Register Another Patient"):
-    st.session_state.page = 1
-    st.session_state.patient_data = {}
-    st.rerun()
 
 # Display data
 st.markdown("### Existing Patients")
