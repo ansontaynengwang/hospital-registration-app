@@ -37,7 +37,7 @@ df = load_patient_data()
 
 st.title("Pekan Hospital")
 st.sidebar.title("Navigation")
-menu_option = st.sidebar.radio("Choose an action:", ["Register Patient", "Edit/Delete Patient"])
+menu_option = st.sidebar.radio("Choose an action:", ["Register Patient 🤒", "Edit/Delete Patient 📝"])
 
 # Registration Section
 if menu_option == "Register Patient":
