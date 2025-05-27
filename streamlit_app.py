@@ -36,6 +36,7 @@ def load_patient_data():
 # Load patient data
 df = load_patient_data()
 
+st.set_page_config(layout="wide")
 st.title("Pekan Hospital")
 st.sidebar.title("Navigation")
 menu_option = st.sidebar.radio("Choose an action:", ["Register Patient 🤒", "Edit/Delete Patient 📝"])
