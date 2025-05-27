@@ -37,6 +37,7 @@ def log_to_previous_patient(data_row):
 
 # Load patient data
 df = load_patient_data()
+df.columns = df.columns.str.strip()
 
 st.set_page_config(layout="wide")
 # Display hospital image
