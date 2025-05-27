@@ -10,9 +10,6 @@ import time
 def get_malaysia_time():
     return datetime.now(pytz.timezone("Asia/Kuala_Lumpur")).strftime("%Y-%m-%d %H:%M:%S")
 
-# Display hospital image
-st.image("https://review.ibanding.com/company/1532441453.jpg", caption="Pekan Hospital", use_container_width=True)
-
 # Google Sheets authentication
 scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
 creds_dict = st.secrets["google_sheets"]
@@ -42,6 +39,8 @@ def log_to_previous_patient(data_row):
 df = load_patient_data()
 
 st.set_page_config(layout="wide")
+# Display hospital image
+st.image("https://review.ibanding.com/company/1532441453.jpg", caption="Pekan Hospital", use_container_width=True)
 st.title("Pekan Hospital")
 st.sidebar.title("Navigation")
 menu_option = st.sidebar.radio("Choose an action:", ["Register Patient 🤒", "Edit/Delete Patient 📝"])
