@@ -106,7 +106,6 @@ def register_patient():
                 worksheet.update(f"A{empty_row_index}:I{empty_row_index}", [new_row])
             else:
                 worksheet.append_row(new_row)
-                log_to_previous_patient(new_row)
 
             st.success(f"Patient {patient['name']} registered successfully at {time_now}.")
             time.sleep(2)
