@@ -1,53 +1,53 @@
 import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
-from datetime import datetime
+#from datetime import datetime
 import pytz
 import pandas as pd
 import time
 
-# Get current Malaysia time
-def get_malaysia_time():
-    return datetime.now(pytz.timezone("Asia/Kuala_Lumpur")).strftime("%Y-%m-%d %H:%M:%S")
+# ------------------------ Configuration ------------------------
+st.set_page_config(layout="wide")
+st.image("https://review.ibanding.com/company/1532441453.jpg", caption="Pekan Hospital", use_container_width=True)
+st.title("Pekan Hospital")
+st.sidebar.title("Navigation")
 
-# Google Sheets authentication
+# ------------------------ Google Sheets Setup ------------------------
 scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
 creds_dict = st.secrets["google_sheets"]
 creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
 client = gspread.authorize(creds)
-
-# Open the spreadsheet and worksheet
 sheet = client.open("Patient")
 worksheet = sheet.worksheet("Patient")
 previous_worksheet = sheet.worksheet("Previous Patient")
 
-# Read and clean data
+# ------------------------ Utility Functions ------------------------
+def get_malaysia_time():
+    return datetime.now(pytz.timezone("Asia/Kuala_Lumpur")).strftime("%Y-%m-%d %H:%M:%S")
+
 def load_patient_data():
     data = worksheet.get_all_values()
     headers = data[0]
     rows = data[1:]
     clean_rows = [row for row in rows if any(cell.strip() for cell in row)]
     df = pd.DataFrame(clean_rows, columns=headers)
+    df.columns = df.columns.str.strip()
     df = df[df["Patient Full Name"].str.strip().astype(bool)]
     return df
 
 def log_to_previous_patient(data_row):
     previous_worksheet.append_row(data_row)
-    
 
-# Load patient data
-df = load_patient_data()
-df.columns = df.columns.str.strip()
+def reset_registration():
+    st.session_state.page = 1
+    st.session_state.patient_data = {}
+    st.rerun()
 
-st.set_page_config(layout="wide")
-# Display hospital image
-st.image("https://review.ibanding.com/company/1532441453.jpg", caption="Pekan Hospital", use_container_width=True)
-st.title("Pekan Hospital")
-st.sidebar.title("Navigation")
+# ------------------------ Sidebar Navigation ------------------------
 menu_option = st.sidebar.radio("Choose an action:", ["Register Patient 🤒", "Edit/Delete Patient 📝"])
 
-# Registration Section
-if menu_option == "Register Patient 🤒":
+# ------------------------ Register Patient ------------------------
+def register_patient():
     if "page" not in st.session_state:
         st.session_state.page = 1
     if "patient_data" not in st.session_state:
@@ -68,12 +68,9 @@ if menu_option == "Register Patient 🤒":
                 st.error("Please fill in all required fields.")
             else:
                 df = load_patient_data()
-                existing_names = df["Patient Full Name"].str.lower().tolist()
-                existing_ics = df["IC Number"].str.strip().tolist()
-
-                if name.lower() in existing_names:
+                if name.lower() in df["Patient Full Name"].str.lower().tolist():
                     st.warning(f"The patient name '{name}' is already registered.")
-                elif ic_number.strip() in existing_ics:
+                elif ic_number.strip() in df["IC Number"].str.strip().tolist():
                     st.warning(f"The IC number '{ic_number}' is already registered.")
                 else:
                     st.session_state.patient_data = {
@@ -88,34 +85,22 @@ if menu_option == "Register Patient 🤒":
     elif st.session_state.page == 2:
         st.subheader("Step 2: Admission Details")
         wad_options = ["1A", "2A", "3A", "3B", "CCU", "ICU"]
-        wad_num = st.selectbox("Wad Number*", wad_options, key="wad_num")
-        bed_num = st.number_input("Bed Number*", min_value=1, max_value=120, key="bed_num")
-        floor = st.selectbox("Floor*", ["1", "2", "3", "4", "5"], key="floor_selectbox")
-        status = st.selectbox("Patient Status*", ["Stable", "Critical", "Under Observation", "Discharged"], key="status")
+        wad_num = st.selectbox("Wad Number*", wad_options)
+        bed_num = st.number_input("Bed Number*", min_value=1, max_value=120)
+        floor = st.selectbox("Floor*", ["1", "2", "3", "4", "5"])
+        status = st.selectbox("Patient Status*", ["Stable", "Critical", "Under Observation", "Discharged"])
 
         if st.button("Submit"):
             patient = st.session_state.patient_data
             time_now = get_malaysia_time()
-
             new_row = [
-                patient["name"],
-                patient["ic_number"],
-                patient["age"],
-                patient["gender"],
-                wad_num,
-                bed_num,
-                floor,
-                status,
-                time_now
+                patient["name"], patient["ic_number"], patient["age"], patient["gender"],
+                wad_num, bed_num, floor, status, time_now
             ]
 
-            data = worksheet.get_all_values()
-            rows = data[1:]
-            empty_row_index = None
-            for i, row in enumerate(rows, start=2):
-                if len(row) < 9 or all(cell.strip() == "" for cell in row[:9]):
-                    empty_row_index = i
-                    break
+            existing_rows = worksheet.get_all_values()[1:]
+            empty_row_index = next((i+2 for i, row in enumerate(existing_rows)
+                                    if len(row) < 9 or all(cell.strip() == "" for cell in row[:9])), None)
 
             if empty_row_index:
                 worksheet.update(f"A{empty_row_index}:I{empty_row_index}", [new_row])
@@ -125,22 +110,17 @@ if menu_option == "Register Patient 🤒":
 
             st.success(f"Patient {patient['name']} registered successfully at {time_now}.")
             time.sleep(2)
-            st.session_state.page = 1
-            st.session_state.patient_data = {}
-            st.rerun()
+            reset_registration()
 
     if st.button("Register Another Patient"):
-        st.session_state.page = 1
-        st.session_state.patient_data = {}
-        st.rerun()
+        reset_registration()
 
-# Edit/Delete Section
-elif menu_option == "Edit/Delete Patient 📝":
+# ------------------------ Edit or Delete Patient ------------------------
+def edit_delete_patient():
     st.subheader("Edit or Delete Patient")
     df = load_patient_data()
 
     if not df.empty:
-        df.columns = df.columns.str.strip()
         patient_names = df["Patient Full Name"].dropna().tolist()
         selected_name = st.selectbox("Select a patient", patient_names)
 
@@ -175,13 +155,11 @@ elif menu_option == "Edit/Delete Patient 📝":
                         pending = st.session_state.edit_pending
                         df = load_patient_data()
                         duplicate_ic = df[(df["IC Number"].str.strip() == pending["ic"].strip()) & (df.index != pending["index"])]
-
                         if not duplicate_ic.empty:
                             st.warning(f"The IC number '{pending['ic']}' is already used by another patient.")
                         else:
-                            time_now = get_malaysia_time()
                             update_row = pending["index"] + 2
-
+                            time_now = get_malaysia_time()
                             worksheet.update(f"A{update_row}", [[pending["name"].upper()]])
                             worksheet.update(f"B{update_row}", [[pending["ic"].strip()]])
                             worksheet.update(f"C{update_row}", [[pending["age"]]])
@@ -197,44 +175,37 @@ elif menu_option == "Edit/Delete Patient 📝":
                 with col2:
                     if st.button("❌ No, cancel"):
                         st.info("❎ Update cancelled.")
-                        time.sleep(2)
                         del st.session_state.edit_pending
+                        time.sleep(2)
                         st.rerun()
 
             if st.button("Delete Patient"):
                 st.session_state.confirm_delete = True
-            
+
             if st.session_state.get("confirm_delete", False):
                 st.warning("⚠️ Are you sure you want to delete this patient record?")
                 col1, col2 = st.columns(2)
-            
                 with col1:
                     if st.button("🗑️ Yes, delete"):
-                        try:
-                            # Log to Previous Patient before deletion
-                            row_data = df.loc[selected_row_index].to_dict()
-                            row_to_delete = [
-                                row_data.get("Patient Full Name", ""),
-                                row_data.get("IC Number", ""),
-                                row_data.get("Age", ""),
-                                row_data.get("Gender", ""),
-                                row_data.get("Wad Number", ""),
-                                row_data.get("Bed Number", ""),
-                                row_data.get("Floor", ""),
-                                row_data.get("Patient Status", ""),
-                                get_malaysia_time()
-                            ]
-                            
-                            log_to_previous_patient(row_to_delete)
+                        row_data = df.loc[selected_row_index].to_dict()
+                        row_to_delete = [
+                            row_data.get("Patient Full Name", ""),
+                            row_data.get("IC Number", ""),
+                            row_data.get("Age", ""),
+                            row_data.get("Gender", ""),
+                            row_data.get("Wad Number", ""),
+                            row_data.get("Bed Number", ""),
+                            row_data.get("Floor", ""),
+                            row_data.get("Patient Status", ""),
+                            get_malaysia_time()
+                        ]
+                        log_to_previous_patient(row_to_delete)
+                        worksheet.delete_rows(int(selected_row_index) + 2)
+                        st.success(f"🗑️ Deleted patient record for {selected_name}.")
+                        st.session_state.confirm_delete = False
+                        time.sleep(2)
+                        st.rerun()
 
-                            worksheet.delete_rows(int(selected_row_index) + 2)
-                            st.success(f"🗑️ Deleted patient record for {selected_name}.")
-                            st.session_state.confirm_delete = False
-                            time.sleep(2)
-                            st.rerun()
-                        except Exception as e:
-                            st.error(f"❌ Error deleting row: {e}")
-            
                 with col2:
                     if st.button("❎ No, cancel"):
                         st.info("Deletion cancelled.")
@@ -242,6 +213,12 @@ elif menu_option == "Edit/Delete Patient 📝":
                         time.sleep(2)
                         st.rerun()
 
-# Display data
+# ------------------------ Main ------------------------
+if menu_option == "Register Patient 🤒":
+    register_patient()
+elif menu_option == "Edit/Delete Patient 📝":
+    edit_delete_patient()
+
+# ------------------------ Display Patient Data ------------------------
 st.markdown("### Existing Patients")
-st.dataframe(df)
+st.dataframe(load_patient_data())
