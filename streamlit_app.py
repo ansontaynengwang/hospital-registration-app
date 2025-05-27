@@ -211,10 +211,20 @@ elif menu_option == "Edit/Delete Patient 📝":
                     if st.button("🗑️ Yes, delete"):
                         try:
                             # Log to Previous Patient before deletion
-                            row_to_delete = df.loc[selected_row_index].tolist()
-                            row_to_delete += [""] * (9 - len(row_to_delete))  # Ensure 9 columns
+                            row_to_delete = [
+                                df.at[selected_row_index, "Patient Full Name"],
+                                df.at[selected_row_index, "IC Number"],
+                                df.at[selected_row_index, "Age"],
+                                df.at[selected_row_index, "Gender"],
+                                df.at[selected_row_index, "Wad Number"] if "Wad Number" in df.columns else "",
+                                df.at[selected_row_index, "Bed Number"] if "Bed Number" in df.columns else "",
+                                df.at[selected_row_index, "Floor"] if "Floor" in df.columns else "",
+                                df.at[selected_row_index, "Patient Status"],
+                                get_malaysia_time()  # Update the timestamp to deletion time
+                            ]
+                            
                             log_to_previous_patient(row_to_delete)
-                    
+
                             worksheet.delete_rows(int(selected_row_index) + 2)
                             st.success(f"🗑️ Deleted patient record for {selected_name}.")
                             st.session_state.confirm_delete = False
