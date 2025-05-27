@@ -112,9 +112,6 @@ def register_patient():
             time.sleep(2)
             reset_registration()
 
-    if st.button("Register Another Patient"):
-        reset_registration()
-
 # ------------------------ Edit or Delete Patient ------------------------
 def edit_delete_patient():
     st.subheader("Edit or Delete Patient")
