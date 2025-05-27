@@ -22,6 +22,7 @@ client = gspread.authorize(creds)
 # Open the spreadsheet and worksheet
 sheet = client.open("Patient")
 worksheet = sheet.worksheet("Patient")
+previous_worksheet = sheet.worksheet("Previous Patient")
 
 # Read and clean data
 def load_patient_data():
@@ -32,6 +33,10 @@ def load_patient_data():
     df = pd.DataFrame(clean_rows, columns=headers)
     df = df[df["Patient Full Name"].str.strip().astype(bool)]
     return df
+
+def log_to_previous_patient(data_row):
+    previous_worksheet.append_row(data_row)
+    
 
 # Load patient data
 df = load_patient_data()
@@ -116,6 +121,7 @@ if menu_option == "Register Patient 🤒":
                 worksheet.update(f"A{empty_row_index}:I{empty_row_index}", [new_row])
             else:
                 worksheet.append_row(new_row)
+                log_to_previous_patient(new_row)
 
             st.success(f"Patient {patient['name']} registered successfully at {time_now}.")
             time.sleep(2)
@@ -205,6 +211,11 @@ elif menu_option == "Edit/Delete Patient 📝":
                 with col1:
                     if st.button("🗑️ Yes, delete"):
                         try:
+                            # Log to Previous Patient before deletion
+                            row_to_delete = df.loc[selected_row_index].tolist()
+                            row_to_delete += [""] * (9 - len(row_to_delete))  # Ensure 9 columns
+                            log_to_previous_patient(row_to_delete)
+                    
                             worksheet.delete_rows(int(selected_row_index) + 2)
                             st.success(f"🗑️ Deleted patient record for {selected_name}.")
                             st.session_state.confirm_delete = False
