@@ -84,8 +84,8 @@ def register_patient():
 
     elif st.session_state.page == 2:
         st.subheader("Step 2: Admission Details")
-        wad_options = ["1A", "2A", "3A", "3B", "CCU", "ICU"]
-        wad_num = st.selectbox("Wad Number*", wad_options)
+        ward_options = ["1A", "2A", "3A", "3B", "CCU", "ICU"]
+        ward_num = st.selectbox("Ward Number*", ward_options)
         bed_num = st.number_input("Bed Number*", min_value=1, max_value=120)
         floor = st.selectbox("Floor*", ["1", "2", "3", "4", "5"])
         status = st.selectbox("Patient Status*", ["Stable", "Critical", "Under Observation", "Discharged"])
