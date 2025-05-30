@@ -95,7 +95,7 @@ def register_patient():
             time_now = get_malaysia_time()
             new_row = [
                 patient["name"], patient["ic_number"], patient["age"], patient["gender"],
-                wad_num, bed_num, floor, status, time_now
+                ward_num, bed_num, floor, status, time_now
             ]
 
             existing_rows = worksheet.get_all_values()[1:]
@@ -189,7 +189,7 @@ def edit_delete_patient():
                             row_data.get("IC Number", ""),
                             row_data.get("Age", ""),
                             row_data.get("Gender", ""),
-                            row_data.get("Wad Number", ""),
+                            row_data.get("Ward Number", ""),
                             row_data.get("Bed Number", ""),
                             row_data.get("Floor", ""),
                             row_data.get("Patient Status", ""),
