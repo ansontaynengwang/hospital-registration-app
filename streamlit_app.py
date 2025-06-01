@@ -229,10 +229,10 @@ if not df.empty:
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         df.to_excel(writer, index=False, sheet_name="Patients")
-        writer.save()
+    buffer.seek(0)
     st.download_button(
         label="Download as Excel 📄",
-        data=buffer.getvalue(),
+        data=buffer,
         file_name="patient_data.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
