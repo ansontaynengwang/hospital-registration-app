@@ -5,6 +5,7 @@ from datetime import datetime
 import pytz
 import pandas as pd
 import time
+import io
 
 # ------------------------ Configuration ------------------------
 st.set_page_config(layout="wide")
@@ -44,7 +45,7 @@ def reset_registration():
     st.rerun()
 
 # ------------------------ Sidebar Navigation ------------------------
-menu_option = st.sidebar.radio("Choose an action:", ["Register Patient 🤒", "Edit/Delete Patient 📝"])
+menu_option = st.sidebar.radio("Menu:", ["Register Patient 🤒", "Edit/Delete Patient 📝"])
 
 # ------------------------ Register Patient ------------------------
 def register_patient():
@@ -218,3 +219,22 @@ elif menu_option == "Edit/Delete Patient 📝":
 # ------------------------ Display Patient Data ------------------------
 st.markdown("### Existing Patients")
 st.dataframe(load_patient_data())
+
+# ------------------------ Download Patient Data ------------------------
+st.markdown("### 📥 Download Patient Data")
+
+df = load_patient_data()
+
+if not df.empty:
+    buffer = io.BytesIO()
+    with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
+        df.to_excel(writer, index=False, sheet_name="Patients")
+        writer.save()
+    st.download_button(
+        label="Download as Excel 📄",
+        data=buffer.getvalue(),
+        file_name="patient_data.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+else:
+    st.info("No patient data available for download.")
