@@ -221,7 +221,7 @@ st.markdown("### Existing Patients")
 st.dataframe(load_patient_data())
 
 # ------------------------ Download Patient Data ------------------------
-st.markdown("### 📥 Download Patient Data")Add commentMore actions
+st.markdown("### 📥 Download Patient Data")
 
 df = load_patient_data()
 
