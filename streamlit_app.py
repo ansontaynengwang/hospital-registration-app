@@ -221,7 +221,7 @@ st.markdown("### Existing Patients")
 st.dataframe(load_patient_data())
 
 # ------------------------ Download Patient Data ------------------------
-st.markdown("### 📥 Download Patient Data")
+st.markdown("### 📥 Download Patient Data")Add commentMore actions
 
 df = load_patient_data()
 
@@ -231,10 +231,13 @@ if not df.empty:
         df.to_excel(writer, index=False, sheet_name="Patients")
     buffer.seek(0)
     st.download_button(
-        label="Download as Excel 📄",
+    st.sidebar.markdown("### 📥 Download Data")
+    st.sidebar.download_button(
+        label="Download as Excel 📄",Add commentMore actions
         data=buffer,
         file_name="patient_data.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 else:
     st.info("No patient data available for download.")
+    st.sidebar.info("No patient data available for download.")
