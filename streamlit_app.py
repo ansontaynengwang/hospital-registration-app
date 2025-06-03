@@ -227,11 +227,11 @@ df_all = load_patient_data()
 
 if not df_all.empty:
     # Ensure Timestamp is in datetime format
-    df_all["Timestamp"] = pd.to_datetime(df_all["Timestamp"], errors='coerce')
-    df_all = df_all.dropna(subset=["Timestamp"])  # Drop rows without proper timestamp
+    df_all["Date & Time"] = pd.to_datetime(df_all["Date & Time"], errors='coerce')
+    df_all = df_all.dropna(subset=["Date & Time"])  # Drop rows without proper timestamp
 
-    min_date = df_all["Timestamp"].min().date()
-    max_date = df_all["Timestamp"].max().date()
+    min_date = df_all["Date & Time"].min().date()
+    max_date = df_all["Date & Time"].max().date()
 
     start_date = st.sidebar.date_input("Start Date", min_value=min_date, max_value=max_date, value=min_date)
     end_date = st.sidebar.date_input("End Date", min_value=min_date, max_value=max_date, value=max_date)
@@ -240,7 +240,7 @@ if not df_all.empty:
         st.sidebar.warning("⚠️ Start date must be before end date.")
     else:
         # Filter by date
-        mask = (df_all["Timestamp"].dt.date >= start_date) & (df_all["Timestamp"].dt.date <= end_date)
+        mask = (df_all["Date & Time"].dt.date >= start_date) & (df_all["Date & Time"].dt.date <= end_date)
         filtered_df = df_all.loc[mask]
 
         st.markdown("### 🧾 Filtered Patient Data")
