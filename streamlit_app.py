@@ -6,6 +6,7 @@ import pytz
 import pandas as pd
 import time
 import io
+from fpdf import FPDF
 
 # ------------------------ Configuration ------------------------
 st.set_page_config(layout="wide")
@@ -220,19 +221,80 @@ elif menu_option == "Edit/Delete Patient 📝":
 st.markdown("### Existing Patients")
 st.dataframe(load_patient_data())
 
-# ------------------------ Download Patient Data ------------------------
-df = load_patient_data()
-if not df.empty:
-    buffer = io.BytesIO()
-    with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-        df.to_excel(writer, index=False, sheet_name="Patients")
-    buffer.seek(0)
-    st.sidebar.markdown("### 📥 Download Data")
-    st.sidebar.download_button(
-        label="Download as Excel 📄",
-        data=buffer,
-        file_name="patient_data.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
+# ------------------------ Date Range Filter for Download ------------------------
+st.sidebar.markdown("### 📆 Filter by Date Range")
+df_all = load_patient_data()
+
+if not df_all.empty:
+    # Ensure Timestamp is in datetime format
+    df_all["Timestamp"] = pd.to_datetime(df_all["Timestamp"], errors='coerce')
+    df_all = df_all.dropna(subset=["Timestamp"])  # Drop rows without proper timestamp
+
+    min_date = df_all["Timestamp"].min().date()
+    max_date = df_all["Timestamp"].max().date()
+
+    start_date = st.sidebar.date_input("Start Date", min_value=min_date, max_value=max_date, value=min_date)
+    end_date = st.sidebar.date_input("End Date", min_value=min_date, max_value=max_date, value=max_date)
+
+    if start_date > end_date:
+        st.sidebar.warning("⚠️ Start date must be before end date.")
+    else:
+        # Filter by date
+        mask = (df_all["Timestamp"].dt.date >= start_date) & (df_all["Timestamp"].dt.date <= end_date)
+        filtered_df = df_all.loc[mask]
+
+        st.markdown("### 🧾 Filtered Patient Data")
+        st.dataframe(filtered_df)
+
+        if not filtered_df.empty:
+            # ------------------------ Excel Download ------------------------
+            excel_buffer = io.BytesIO()
+            with pd.ExcelWriter(excel_buffer, engine="xlsxwriter") as writer:
+                filtered_df.to_excel(writer, index=False, sheet_name="Patients")
+            excel_buffer.seek(0)
+
+            st.sidebar.markdown("### 📥 Download Filtered Data")
+            st.sidebar.download_button(
+                label="Download Excel 📊",
+                data=excel_buffer,
+                file_name="filtered_patient_data.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+
+            # ------------------------ PDF Download ------------------------
+            def generate_pdf(df):
+                pdf = FPDF()
+                pdf.add_page()
+                pdf.set_font("Arial", size=8)
+
+                col_width = pdf.w / (len(df.columns) + 1)
+                row_height = 8
+
+                # Table header
+                for col in df.columns:
+                    pdf.cell(col_width, row_height, col[:15], border=1)  # Trim long headers
+                pdf.ln(row_height)
+
+                # Table rows
+                for _, row in df.iterrows():
+                    for item in row:
+                        pdf.cell(col_width, row_height, str(item)[:15], border=1)  # Trim long data
+                    pdf.ln(row_height)
+
+                pdf_buffer = io.BytesIO()
+                pdf.output(pdf_buffer)
+                pdf_buffer.seek(0)
+                return pdf_buffer
+
+            pdf_data = generate_pdf(filtered_df)
+
+            st.sidebar.download_button(
+                label="Download PDF 🧾",
+                data=pdf_data,
+                file_name="filtered_patient_data.pdf",
+                mime="application/pdf"
+            )
+        else:
+            st.sidebar.info("No patient data in selected date range.")
 else:
-    st.sidebar.info("No patient data available for download.")
+    st.sidebar.info("No patient records available.")
