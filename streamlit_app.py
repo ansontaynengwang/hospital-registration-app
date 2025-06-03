@@ -281,16 +281,14 @@ if not df_all.empty:
                         pdf.cell(col_width, row_height, str(item)[:15], border=1)  # Trim long data
                     pdf.ln(row_height)
 
-                pdf_buffer = io.BytesIO()
-                pdf.output(pdf_buffer)
-                pdf_buffer.seek(0)
+                pdf_bytes = pdf.output(dest="S").encode("latin1")
                 return pdf_buffer
 
             pdf_data = generate_pdf(filtered_df)
 
             st.sidebar.download_button(
-                label="Download PDF 🧾",
-                data=pdf_data,
+                label="📄 Download PDF (Filtered)",
+                data=pdf_bytes,
                 file_name="filtered_patient_data.pdf",
                 mime="application/pdf"
             )
