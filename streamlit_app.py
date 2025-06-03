@@ -247,7 +247,7 @@ def download_excel_pdf():
                 st.sidebar.download_button(
                     label="Download Excel 📊",
                     data=excel_buffer,
-                    file_name="filtered_patient_data.xlsx",
+                    file_name="patient_data.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
     
@@ -279,7 +279,7 @@ def download_excel_pdf():
                 st.sidebar.download_button(
                     label="📄 Download PDF",
                     data=pdf_bytes,
-                    file_name="filtered_patient_data.pdf",
+                    file_name="patient_data.pdf",
                     mime="application/pdf"
                 )
             else:
