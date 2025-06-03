@@ -284,7 +284,7 @@ if not df_all.empty:
                 pdf_bytes = pdf.output(dest="S").encode("latin1")
                 return pdf_bytes
 
-            pdf_data = generate_pdf(filtered_df)
+            pdf_bytes = generate_pdf(filtered_df)
 
             st.sidebar.download_button(
                 label="📄 Download PDF (Filtered)",
