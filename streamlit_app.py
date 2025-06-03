@@ -277,7 +277,7 @@ def download_excel_pdf():
                 pdf_bytes = generate_pdf(filtered_df)
     
                 st.sidebar.download_button(
-                    label="📄 Download PDF",
+                    label="Download PDF 📄",
                     data=pdf_bytes,
                     file_name="patient_data.pdf",
                     mime="application/pdf"
