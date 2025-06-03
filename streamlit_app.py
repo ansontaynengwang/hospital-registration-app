@@ -255,39 +255,56 @@ def download_excel_pdf():
                 def generate_pdf(df):
                     pdf = FPDF(orientation='L', unit='mm', format='A4')
                     pdf.add_page()
-                    pdf.set_auto_page_break(auto=True, margin=15)
+                    pdf.set_auto_page_break(auto=True, margin=10)
                     pdf.set_font("Arial", size=8)
                 
-                    # Define specific widths for critical columns
+                    # Define column widths (adjust as needed)
                     column_widths = []
                     for col in df.columns:
-                        if "Name" in col:
-                            column_widths.append(50)  # Wider for names
-                        elif "Date" in col:
-                            column_widths.append(45)  # Wider for date/time
+                        if "Patient Full Name" in col:
+                            column_widths.append(45)
+                        elif "IC Number" in col:
+                            column_widths.append(35)
+                        elif "Patient Status" in col:
+                            column_widths.append(35)
+                        elif "Date & Time" in col:
+                            column_widths.append(45)
                         else:
-                            column_widths.append(30)  # Default width
+                            column_widths.append(22)
                 
                     row_height = 8
                 
-                    # Table Header
+                    # --- Table Header ---
                     for i, col in enumerate(df.columns):
-                        pdf.cell(column_widths[i], row_height, col, border=1)
+                        pdf.multi_cell(column_widths[i], row_height, col, border=1, align='L', ln=3, max_line_height=pdf.font_size)
+                        pdf.set_xy(pdf.get_x() + column_widths[i], pdf.get_y() - row_height)
                     pdf.ln(row_height)
                 
-                    # Table Rows
+                    # --- Table Rows ---
                     for _, row in df.iterrows():
-                        for i, item in enumerate(row):
-                            cell_text = str(item)
-                            # Trim cell text if it's too long for the column
-                            max_chars = int(column_widths[i] / 2)  # Approx chars that fit
-                            if len(cell_text) > max_chars:
-                                cell_text = cell_text[:max_chars - 3] + "..."
-                            pdf.cell(column_widths[i], row_height, cell_text, border=1)
-                        pdf.ln(row_height)
+                        x_start = pdf.get_x()
+                        y_start = pdf.get_y()
+                        cell_heights = []
                 
-                    pdf_bytes = pdf.output(dest="S").encode("latin1")
-                    return pdf_bytes
+                        # First pass: calculate max cell height in this row
+                        for i, item in enumerate(row):
+                            text = str(item)
+                            num_lines = pdf.get_string_width(text) / (column_widths[i] - 1)
+                            cell_height = row_height * (int(num_lines) + 1)
+                            cell_heights.append(cell_height)
+                
+                        max_height = max(cell_heights)
+                
+                        # Second pass: render cells with matching row height
+                        for i, item in enumerate(row):
+                            x = pdf.get_x()
+                            y = pdf.get_y()
+                            pdf.multi_cell(column_widths[i], row_height, str(item), border=1)
+                            pdf.set_xy(x + column_widths[i], y)
+                
+                        pdf.ln(max_height)
+                
+                    return pdf.output(dest="S").encode("latin1")
 
                 pdf_bytes = generate_pdf(filtered_df)
     
