@@ -253,7 +253,7 @@ def download_excel_pdf():
     
                 # ------------------------ PDF Download ------------------------
                 def generate_pdf(df):
-                    pdf = FPDF()
+                    pdf = FPDF(orientation='L')
                     pdf.add_page()
                     pdf.set_font("Arial", size=8)
     
