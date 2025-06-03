@@ -253,27 +253,42 @@ def download_excel_pdf():
     
                 # ------------------------ PDF Download ------------------------
                 def generate_pdf(df):
-                    pdf = FPDF(orientation='L')
+                    pdf = FPDF(orientation='L', unit='mm', format='A4')
                     pdf.add_page()
+                    pdf.set_auto_page_break(auto=True, margin=15)
                     pdf.set_font("Arial", size=8)
-    
-                    col_width = pdf.w / (len(df.columns) + 1)
-                    row_height = 8
-    
-                    # Table header
+                
+                    # Define specific widths for critical columns
+                    column_widths = []
                     for col in df.columns:
-                        pdf.cell(col_width, row_height, col[:15], border=1)  # Trim long headers
+                        if "Name" in col:
+                            column_widths.append(50)  # Wider for names
+                        elif "Date" in col:
+                            column_widths.append(45)  # Wider for date/time
+                        else:
+                            column_widths.append(30)  # Default width
+                
+                    row_height = 8
+                
+                    # Table Header
+                    for i, col in enumerate(df.columns):
+                        pdf.cell(column_widths[i], row_height, col, border=1)
                     pdf.ln(row_height)
-    
-                    # Table rows
+                
+                    # Table Rows
                     for _, row in df.iterrows():
-                        for item in row:
-                            pdf.cell(col_width, row_height, str(item)[:15], border=1)  # Trim long data
+                        for i, item in enumerate(row):
+                            cell_text = str(item)
+                            # Trim cell text if it's too long for the column
+                            max_chars = int(column_widths[i] / 2)  # Approx chars that fit
+                            if len(cell_text) > max_chars:
+                                cell_text = cell_text[:max_chars - 3] + "..."
+                            pdf.cell(column_widths[i], row_height, cell_text, border=1)
                         pdf.ln(row_height)
-    
+                
                     pdf_bytes = pdf.output(dest="S").encode("latin1")
                     return pdf_bytes
-    
+
                 pdf_bytes = generate_pdf(filtered_df)
     
                 st.sidebar.download_button(
