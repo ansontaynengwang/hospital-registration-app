@@ -276,33 +276,18 @@ def download_excel_pdf():
                 
                     # --- Table Header ---
                     for i, col in enumerate(df.columns):
-                        pdf.multi_cell(column_widths[i], row_height, col, border=1, align='L', ln=3, max_line_height=pdf.font_size)
-                        pdf.set_xy(pdf.get_x() + column_widths[i], pdf.get_y() - row_height)
+                        pdf.cell(column_widths[i], row_height, str(col), border=1, align='L')
                     pdf.ln(row_height)
                 
                     # --- Table Rows ---
                     for _, row in df.iterrows():
-                        x_start = pdf.get_x()
-                        y_start = pdf.get_y()
-                        cell_heights = []
-                
-                        # First pass: calculate max cell height in this row
                         for i, item in enumerate(row):
                             text = str(item)
-                            num_lines = pdf.get_string_width(text) / (column_widths[i] - 1)
-                            cell_height = row_height * (int(num_lines) + 1)
-                            cell_heights.append(cell_height)
-                
-                        max_height = max(cell_heights)
-                
-                        # Second pass: render cells with matching row height
-                        for i, item in enumerate(row):
-                            x = pdf.get_x()
-                            y = pdf.get_y()
-                            pdf.multi_cell(column_widths[i], row_height, str(item), border=1)
-                            pdf.set_xy(x + column_widths[i], y)
-                
-                        pdf.ln(max_height)
+                            # Wrap text manually if too long
+                            if len(text) > 50:
+                                text = text[:47] + "..."  # optional truncation
+                            pdf.cell(column_widths[i], row_height, text, border=1)
+                        pdf.ln(row_height)
                 
                     return pdf.output(dest="S").encode("latin1")
 
