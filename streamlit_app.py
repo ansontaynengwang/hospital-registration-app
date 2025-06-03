@@ -262,13 +262,13 @@ def download_excel_pdf():
                     column_widths = []
                     for col in df.columns:
                         if "Patient Full Name" in col:
-                            column_widths.append(45)
+                            column_widths.append(50)
                         elif "IC Number" in col:
                             column_widths.append(35)
                         elif "Patient Status" in col:
                             column_widths.append(35)
                         elif "Date & Time" in col:
-                            column_widths.append(45)
+                            column_widths.append(40)
                         else:
                             column_widths.append(22)
                 
