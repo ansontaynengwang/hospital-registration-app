@@ -95,50 +95,47 @@ def register_patient():
             "CCU": 2,
             "ICU": 4
         }
-        
+    
         ward_num = st.selectbox("Ward Number*", ward_options)
         max_beds = ward_beds[ward_num]
         bed_num = st.number_input(f"Bed Number (1 to {max_beds})*", min_value=1, max_value=max_beds)
         floor = st.selectbox("Floor*", ["1", "2", "3", "4", "5"])
         status = st.selectbox("Patient Status*", ["Stable", "Critical", "Under Observation", "Discharged"])
-
+    
         if st.button("Submit"):
             patient = st.session_state.patient_data
             time_now = get_malaysia_time()
-        
-            # Load existing data
+    
+            # 🔒 Load and sanitize existing data
             df_existing = load_patient_data()
-            
-            # Clean and ensure consistent types
-            df_existing["Ward Number"] = df_existing["Ward Number"].astype(str).str.strip()
+    
+            # 🔍 Normalize and validate bed usage
+            df_existing["Ward Number"] = df_existing["Ward Number"].astype(str).str.strip().str.upper()
             df_existing["Bed Number"] = df_existing["Bed Number"].astype(str).str.strip()
-        
-            # Compare using string type for both ward and bed
-            selected_bed = str(int(bed_num))
-            selected_ward = ward_num.strip()
-        
-            bed_conflict = df_existing[
-                (df_existing["Ward Number"] == selected_ward) &
-                (df_existing["Bed Number"] == selected_bed)
+    
+            # Check if same bed in same ward is already used
+            is_conflict = df_existing[
+                (df_existing["Ward Number"] == ward_num.upper()) &
+                (df_existing["Bed Number"] == str(int(bed_num)))
             ]
-        
-            if not bed_conflict.empty:
-                st.error(f"❌ Bed {selected_bed} in Ward {selected_ward} is already occupied. Please choose a different bed.")
+    
+            if not is_conflict.empty:
+                st.error(f"🚫 Bed {int(bed_num)} in Ward {ward_num} is already occupied. Please choose another bed.")
             else:
                 new_row = [
                     patient["name"], patient["ic_number"], patient["age"], patient["gender"],
-                    selected_ward, int(bed_num), floor, status, time_now
+                    ward_num, int(bed_num), floor, status, time_now
                 ]
-        
+    
                 existing_rows = worksheet.get_all_values()[1:]
-                empty_row_index = next((i+2 for i, row in enumerate(existing_rows)
+                empty_row_index = next((i + 2 for i, row in enumerate(existing_rows)
                                         if len(row) < 9 or all(cell.strip() == "" for cell in row[:9])), None)
-        
+    
                 if empty_row_index:
                     worksheet.update(f"A{empty_row_index}:I{empty_row_index}", [new_row])
                 else:
                     worksheet.append_row(new_row)
-        
+    
                 st.success(f"✅ Patient {patient['name']} registered successfully at {time_now}.")
                 time.sleep(2)
                 reset_registration()
