@@ -86,6 +86,7 @@ def register_patient():
 
     elif st.session_state.page == 2:
         st.subheader("Step 2: Admission Details")
+    
         ward_options = ["1A", "2A", "3A", "3B", "CCU", "ICU"]
         ward_beds = {
             "1A": 30,
@@ -96,32 +97,26 @@ def register_patient():
             "ICU": 4
         }
     
+        # User selects ward
         ward_num = st.selectbox("Ward Number*", ward_options)
-        max_beds = ward_beds[ward_num]
-        bed_num = st.number_input(f"Bed Number (1 to {max_beds})*", min_value=1, max_value=max_beds)
         floor = st.selectbox("Floor*", ["1", "2", "3", "4", "5"])
         status = st.selectbox("Patient Status*", ["Stable", "Critical", "Under Observation", "Discharged"])
     
-        if st.button("Submit"):
-            patient = st.session_state.patient_data
-            time_now = get_malaysia_time()
+        # Load data and filter occupied beds
+        df_existing = load_patient_data()
+        df_existing["Ward Number"] = df_existing["Ward Number"].astype(str).str.strip().str.upper()
+        df_existing["Bed Number"] = df_existing["Bed Number"].astype(str).str.strip()
     
-            # 🔒 Load and sanitize existing data
-            df_existing = load_patient_data()
+        occupied_beds = df_existing[df_existing["Ward Number"] == ward_num.upper()]["Bed Number"].tolist()
+        all_beds = [str(bed) for bed in range(1, ward_beds[ward_num] + 1)]
+        available_beds = sorted(list(set(all_beds) - set(occupied_beds)), key=lambda x: int(x))
     
-            # 🔍 Normalize and validate bed usage
-            df_existing["Ward Number"] = df_existing["Ward Number"].astype(str).str.strip().str.upper()
-            df_existing["Bed Number"] = df_existing["Bed Number"].astype(str).str.strip()
+        if available_beds:
+            bed_num = st.selectbox(f"Available Beds in Ward {ward_num}", available_beds)
+            if st.button("Submit"):
+                patient = st.session_state.patient_data
+                time_now = get_malaysia_time()
     
-            # Check if same bed in same ward is already used
-            is_conflict = df_existing[
-                (df_existing["Ward Number"] == ward_num.upper()) &
-                (df_existing["Bed Number"] == str(int(bed_num)))
-            ]
-    
-            if not is_conflict.empty:
-                st.error(f"🚫 Bed {int(bed_num)} in Ward {ward_num} is already occupied. Please choose another bed.")
-            else:
                 new_row = [
                     patient["name"], patient["ic_number"], patient["age"], patient["gender"],
                     ward_num, int(bed_num), floor, status, time_now
@@ -139,6 +134,8 @@ def register_patient():
                 st.success(f"✅ Patient {patient['name']} registered successfully at {time_now}.")
                 time.sleep(2)
                 reset_registration()
+        else:
+            st.error(f"🚫 All {ward_beds[ward_num]} beds in Ward {ward_num} are currently occupied.")
 
 # ------------------------ Edit or Delete Patient ------------------------
 def edit_delete_patient():
