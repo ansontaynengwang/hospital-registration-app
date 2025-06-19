@@ -87,31 +87,55 @@ def register_patient():
     elif st.session_state.page == 2:
         st.subheader("Step 2: Admission Details")
         ward_options = ["1A", "2A", "3A", "3B", "CCU", "ICU"]
+        ward_beds = {
+            "1A": 30,
+            "2A": 30,
+            "3A": 30,
+            "3B": 10,
+            "CCU": 2,
+            "ICU": 4
+        }
+        
         ward_num = st.selectbox("Ward Number*", ward_options)
-        bed_num = st.number_input("Bed Number*", min_value=1, max_value=120)
+        max_beds = ward_beds[ward_num]
+        bed_num = st.number_input(f"Bed Number (1 to {max_beds})*", min_value=1, max_value=max_beds)
         floor = st.selectbox("Floor*", ["1", "2", "3", "4", "5"])
         status = st.selectbox("Patient Status*", ["Stable", "Critical", "Under Observation", "Discharged"])
 
         if st.button("Submit"):
             patient = st.session_state.patient_data
             time_now = get_malaysia_time()
-            new_row = [
-                patient["name"], patient["ic_number"], patient["age"], patient["gender"],
-                ward_num, bed_num, floor, status, time_now
+        
+            # Check if the selected bed in the selected ward is occupied
+            df_existing = load_patient_data()
+            df_existing["Ward Number"] = df_existing["Ward Number"].str.strip()
+            df_existing["Bed Number"] = df_existing["Bed Number"].astype(str).str.strip()
+        
+            bed_conflict = df_existing[
+                (df_existing["Ward Number"] == ward_num) &
+                (df_existing["Bed Number"] == str(int(bed_num)))
             ]
-
-            existing_rows = worksheet.get_all_values()[1:]
-            empty_row_index = next((i+2 for i, row in enumerate(existing_rows)
-                                    if len(row) < 9 or all(cell.strip() == "" for cell in row[:9])), None)
-
-            if empty_row_index:
-                worksheet.update(f"A{empty_row_index}:I{empty_row_index}", [new_row])
+        
+            if not bed_conflict.empty:
+                st.error(f"❌ Bed {int(bed_num)} in Ward {ward_num} is already occupied. Please choose a different bed.")
             else:
-                worksheet.append_row(new_row)
-
-            st.success(f"Patient {patient['name']} registered successfully at {time_now}.")
-            time.sleep(2)
-            reset_registration()
+                new_row = [
+                    patient["name"], patient["ic_number"], patient["age"], patient["gender"],
+                    ward_num, bed_num, floor, status, time_now
+                ]
+        
+                existing_rows = worksheet.get_all_values()[1:]
+                empty_row_index = next((i+2 for i, row in enumerate(existing_rows)
+                                        if len(row) < 9 or all(cell.strip() == "" for cell in row[:9])), None)
+        
+                if empty_row_index:
+                    worksheet.update(f"A{empty_row_index}:I{empty_row_index}", [new_row])
+                else:
+                    worksheet.append_row(new_row)
+        
+                st.success(f"✅ Patient {patient['name']} registered successfully at {time_now}.")
+                time.sleep(2)
+                reset_registration()
 
 # ------------------------ Edit or Delete Patient ------------------------
 def edit_delete_patient():
