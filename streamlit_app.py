@@ -106,22 +106,28 @@ def register_patient():
             patient = st.session_state.patient_data
             time_now = get_malaysia_time()
         
-            # Check if the selected bed in the selected ward is occupied
+            # Load existing data
             df_existing = load_patient_data()
-            df_existing["Ward Number"] = df_existing["Ward Number"].str.strip()
+            
+            # Clean and ensure consistent types
+            df_existing["Ward Number"] = df_existing["Ward Number"].astype(str).str.strip()
             df_existing["Bed Number"] = df_existing["Bed Number"].astype(str).str.strip()
         
+            # Compare using string type for both ward and bed
+            selected_bed = str(int(bed_num))
+            selected_ward = ward_num.strip()
+        
             bed_conflict = df_existing[
-                (df_existing["Ward Number"] == ward_num) &
-                (df_existing["Bed Number"] == str(int(bed_num)))
+                (df_existing["Ward Number"] == selected_ward) &
+                (df_existing["Bed Number"] == selected_bed)
             ]
         
             if not bed_conflict.empty:
-                st.error(f"❌ Bed {int(bed_num)} in Ward {ward_num} is already occupied. Please choose a different bed.")
+                st.error(f"❌ Bed {selected_bed} in Ward {selected_ward} is already occupied. Please choose a different bed.")
             else:
                 new_row = [
                     patient["name"], patient["ic_number"], patient["age"], patient["gender"],
-                    ward_num, bed_num, floor, status, time_now
+                    selected_ward, int(bed_num), floor, status, time_now
                 ]
         
                 existing_rows = worksheet.get_all_values()[1:]
